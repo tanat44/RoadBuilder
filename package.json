@@ -10,12 +10,15 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/dat.gui": "^0.7.9",
     "copy-webpack-plugin": "^11.0.0",
+    "dat.gui": "^0.7.9",
     "webpack": "^5.76.2",
     "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^4.13.1"
   },
   "dependencies": {
+    "@types/three": "^0.149.0",
     "html-webpack-plugin": "^5.5.0",
     "lodash": "^4.17.21",
     "three": "^0.150.1"

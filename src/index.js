@@ -1,10 +1,9 @@
 import * as THREE from "three";
-
-import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { buildCurveMenu, buildMainMenu, setupGui } from "./gui";
+import { setup } from "./setup";
 
-let container;
 let camera, scene, renderer;
 const splineHelperObjects = [];
 let splinePointsLength = 4;
@@ -39,34 +38,11 @@ const params = {
 init();
 
 function init() {
-  container = document.getElementById("container");
-
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xf0f0f0);
-
-  camera = new THREE.PerspectiveCamera(
-    70,
-    window.innerWidth / window.innerHeight,
-    1,
-    10000
-  );
-  camera.position.set(0, 250, 1000);
-  scene.add(camera);
-
-  scene.add(new THREE.AmbientLight(0xf0f0f0));
-  const light = new THREE.SpotLight(0xffffff, 1.5);
-  light.position.set(0, 1500, 200);
-  light.angle = Math.PI * 0.2;
-  light.castShadow = true;
-  light.shadow.camera.near = 200;
-  light.shadow.camera.far = 2000;
-  light.shadow.bias = -0.000222;
-  light.shadow.mapSize.width = 1024;
-  light.shadow.mapSize.height = 1024;
-  scene.add(light);
+  const result = setup();
+  scene = result.scene;
+  camera = result.camera;
 
   // cubes
-
   cubeGeo = new THREE.BoxGeometry(50, 50, 50);
   cubeMaterial = new THREE.MeshLambertMaterial({
     color: 0xfeb74c,
@@ -100,23 +76,9 @@ function init() {
   renderer.shadowMap.enabled = true;
   document.body.appendChild(renderer.domElement);
 
-  const gui = new GUI();
-
-  gui.add(params, "uniform").onChange(render);
-  gui
-    .add(params, "tension", 0, 1)
-    .step(0.01)
-    .onChange(function (value) {
-      splines.uniform.tension = value;
-      updateSplineOutline();
-      render();
-    });
-  gui.add(params, "centripetal").onChange(render);
-  gui.add(params, "chordal").onChange(render);
-  gui.add(params, "addPoint");
-  gui.add(params, "removePoint");
-  gui.add(params, "exportSpline");
-  gui.open();
+  setupGui(render);
+  buildCurveMenu(params, splines, updateSplineOutline);
+  buildMainMenu();
 
   // Controls
   const controls = new OrbitControls(camera, renderer.domElement);
