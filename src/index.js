@@ -1,23 +1,11 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { TransformControls } from "three/addons/controls/TransformControls.js";
-import { buildCurveMenu, buildMainMenu, setupGui } from "./gui";
-import { setup } from "./setup";
+import { Manager } from "./Manager";
 
-let camera, scene, renderer;
 const splineHelperObjects = [];
 let splinePointsLength = 4;
 const positions = [];
 const point = new THREE.Vector3();
-const objects = [];
-const raycaster = new THREE.Raycaster();
-let cubeGeo, cubeMaterial, cubeMaterialSelected, plane, lineMaterial;
-const pointer = new THREE.Vector2();
-const onUpPosition = new THREE.Vector2();
-const onDownPosition = new THREE.Vector2();
-
-let selectedCube = [];
-
+const manager = new Manager();
 const geometry = new THREE.BoxGeometry(20, 20, 20);
 let transformControl;
 
@@ -38,67 +26,14 @@ const params = {
 init();
 
 function init() {
-  const result = setup();
-  scene = result.scene;
-  camera = result.camera;
-
-  // cubes
-  cubeGeo = new THREE.BoxGeometry(50, 50, 50);
-  cubeMaterial = new THREE.MeshLambertMaterial({
-    color: 0xfeb74c,
-    map: new THREE.TextureLoader().load("public/square-outline-textured.png"),
-  });
-  cubeMaterialSelected = cubeMaterial.clone();
-  cubeMaterialSelected.color.setHex("0xff0000");
-
-  const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
-  planeGeometry.rotateX(-Math.PI / 2);
-  const planeMaterial = new THREE.ShadowMaterial({
-    color: 0x000000,
-    opacity: 0.2,
-  });
-
-  plane = new THREE.Mesh(planeGeometry, planeMaterial);
-  plane.position.y = -200;
-  plane.receiveShadow = true;
-  objects.push(plane);
-  scene.add(plane);
-
-  const helper = new THREE.GridHelper(2000, 100);
-  helper.position.y = -199;
-  helper.material.opacity = 0.25;
-  helper.material.transparent = true;
-  scene.add(helper);
-
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.shadowMap.enabled = true;
-  document.body.appendChild(renderer.domElement);
-
-  setupGui(render);
-  buildCurveMenu(params, splines, updateSplineOutline);
-  buildMainMenu();
+  manager.render = render;
 
   // Controls
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.damping = 0.2;
-  controls.addEventListener("change", render);
-
-  transformControl = new TransformControls(camera, renderer.domElement);
-  transformControl.addEventListener("change", render);
-  transformControl.addEventListener("dragging-changed", function (event) {
-    controls.enabled = !event.value;
-  });
-  scene.add(transformControl);
-
-  transformControl.addEventListener("objectChange", function () {
+  manager.orbitControl.addEventListener("change", render);
+  manager.transformControl.addEventListener("objectChange", function () {
     updateSplineOutline();
   });
 
-  document.addEventListener("pointerdown", onPointerDown);
-  document.addEventListener("pointerup", onPointerUp);
-  document.addEventListener("pointermove", onPointerMove);
   window.addEventListener("resize", onWindowResize);
 
   /*******
@@ -120,11 +55,6 @@ function init() {
     "position",
     new THREE.BufferAttribute(new Float32Array(ARC_SEGMENTS * 3), 3)
   );
-
-  lineMaterial = new THREE.LineBasicMaterial({
-    color: 0x0000ff,
-    opacity: 0.35,
-  });
 
   let curve = new THREE.CatmullRomCurve3(positions);
   curve.curveType = "catmullrom";
@@ -164,7 +94,7 @@ function init() {
 
   for (const k in splines) {
     const spline = splines[k];
-    scene.add(spline.mesh);
+    manager.scene.add(spline.mesh);
   }
 
   load([
@@ -205,7 +135,7 @@ function addSplineObject(position) {
 
   object.castShadow = true;
   object.receiveShadow = true;
-  scene.add(object);
+  manager.scene.add(object);
   splineHelperObjects.push(object);
   return object;
 }
@@ -287,84 +217,14 @@ function render() {
   splines.uniform.mesh.visible = params.uniform;
   splines.centripetal.mesh.visible = params.centripetal;
   splines.chordal.mesh.visible = params.chordal;
-  renderer.render(scene, camera);
-}
-
-function onPointerDown(event) {
-  onDownPosition.x = event.clientX;
-  onDownPosition.y = event.clientY;
-
-  pointer.set(
-    (event.clientX / window.innerWidth) * 2 - 1,
-    -(event.clientY / window.innerHeight) * 2 + 1
-  );
-
-  raycaster.setFromCamera(pointer, camera);
-
-  const intersects = raycaster.intersectObjects(objects, false);
-
-  if (intersects.length > 0) {
-    const intersect = intersects[0];
-
-    if (intersect.object !== plane) {
-      if (selectedCube.length === 0) {
-        intersect.object.material = cubeMaterialSelected;
-      } else {
-        selectedCube[0].material = cubeMaterial;
-      }
-      selectedCube.push(intersect.object);
-    } else {
-      const voxel = new THREE.Mesh(cubeGeo, cubeMaterial);
-      voxel.position.copy(intersect.point).add(intersect.face.normal);
-      voxel.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
-      scene.add(voxel);
-      objects.push(voxel);
-    }
-
-    if (selectedCube.length === 2) {
-      const points = [];
-      points.push(selectedCube[0].position);
-      points.push(selectedCube[1].position);
-
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(geometry, lineMaterial);
-      scene.add(line);
-      selectedCube = [];
-    }
-
-    render();
-  }
-}
-
-function onPointerUp(event) {
-  onUpPosition.x = event.clientX;
-  onUpPosition.y = event.clientY;
-
-  if (onDownPosition.distanceTo(onUpPosition) === 0) transformControl.detach();
-}
-
-function onPointerMove(event) {
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(pointer, camera);
-
-  const intersects = raycaster.intersectObjects(splineHelperObjects, false);
-
-  if (intersects.length > 0) {
-    const object = intersects[0].object;
-
-    if (object !== transformControl.object) {
-      transformControl.attach(object);
-    }
-  }
+  manager.renderer.render(manager.scene, manager.camera);
 }
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  manager.camera.aspect = window.innerWidth / window.innerHeight;
+  manager.camera.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  manager.renderer.setSize(window.innerWidth, window.innerHeight);
 
   render();
 }

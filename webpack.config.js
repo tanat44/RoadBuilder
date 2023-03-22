@@ -26,12 +26,21 @@ module.exports = {
     clean: true,
     publicPath: "auto",
   },
+
   module: {
     rules: [
       {
         test: /\.png/,
         type: "asset/resource",
       },
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
     ],
+  },
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"],
   },
 };

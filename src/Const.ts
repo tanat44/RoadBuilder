@@ -1,0 +1,1 @@
+export const STORAGE_SAVE_KEY = "design"
