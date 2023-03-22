@@ -14,14 +14,14 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "Hot Module Replacement",
+      template: "src/index.html",
     }),
     new CopyPlugin({
       patterns: [{ from: "public", to: "public" }],
     }),
   ],
   output: {
-    filename: "[name].bundle.js",
+    filename: "main.js",
     path: path.resolve(__dirname, "dist"),
     clean: true,
     publicPath: "auto",
