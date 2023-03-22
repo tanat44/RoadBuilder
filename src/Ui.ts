@@ -4,14 +4,17 @@ import { PathEngine } from "./PathEngine";
 import { Tools, ToolState } from "./Tools/ToolState";
 
 export class Ui {
-
   manager: Manager;
   gui: GUI = new GUI();
+  infoText: any;
+  objectNameText: any;
 
   constructor(manager: Manager) {
     this.manager = manager;
-    this.buildMainMenu(manager.toolState, manager.pathEngine);
-    this.buildExampleMenu();
+    this.buildInfoMenu();
+    this.buildToolbar();
+    this.buildDebugMenu();
+    // this.buildExampleMenu();
     // buildCurveMenu(params, splines, updateSplineOutline);
   }
 
@@ -34,40 +37,26 @@ export class Ui {
     curveFolder.add(params, "exportSpline");
   }
 
-  buildMainMenu(toolState: ToolState, pathEngine: PathEngine) {
+  buildToolbar() {
     if (!this.gui) return;
-    const mainMenu = this.gui.addFolder("Main");
-
-    let obj = {
-      CurrentTool: toolState.getCurrentToolString(),
-    };
-
-    const currentToolText = mainMenu.add(obj, "CurrentTool");
-    toolState.onToolChange = () => {
-      currentToolText.setValue(toolState.getCurrentToolString());
-    };
-
-    const _manager = this.manager
+    const mainMenu = this.gui.addFolder("Toolbar");
+    const _manager = this.manager;
 
     const handler = {
-      None: function () {
-        toolState.changeTool(Tools.None);
+      Select: function () {
+        _manager.toolState.changeTool(Tools.Select);
       },
       Delete: function () {
-        toolState.changeTool(Tools.Delete);
+        _manager.toolState.changeTool(Tools.Delete);
       },
       Intersection: function () {
-        toolState.changeTool(Tools.Intersection);
+        _manager.toolState.changeTool(Tools.Intersection);
       },
       Station: function () {
-        toolState.changeTool(Tools.Station);
+        _manager.toolState.changeTool(Tools.Station);
       },
-      Connect: function () {
-        toolState.changeTool(Tools.Connect);
-      },
-      Calculate: function () {
-        pathEngine.calculate();
-        toolState.changeTool(Tools.None);
+      Connection: function () {
+        _manager.toolState.changeTool(Tools.Connection);
       },
       Save: function () {
         _manager.save();
@@ -77,16 +66,57 @@ export class Ui {
       },
     };
 
-    mainMenu.add(handler, "None");
-    mainMenu.add(handler, "Delete")
+    mainMenu.add(handler, "Select");
+    mainMenu.add(handler, "Delete");
     mainMenu.add(handler, "Intersection");
-    mainMenu.add(handler, "Station")
-    mainMenu.add(handler, "Connect")
-    mainMenu.add(handler, "Calculate");
+    mainMenu.add(handler, "Station");
+    mainMenu.add(handler, "Connection");
     mainMenu.add(handler, "Save");
     mainMenu.add(handler, "Load");
 
     mainMenu.open();
+  }
+
+  buildInfoMenu() {
+    const infoMenu = this.gui.addFolder("Information");
+    let obj = {
+      CurrentTool: this.manager.toolState.getCurrentToolString(),
+      Info: "",
+      ObjectName: "",
+    };
+    const currentToolText = infoMenu.add(obj, "CurrentTool");
+    this.manager.toolState.subscribeToolChange(() => {
+      currentToolText.setValue(this.manager.toolState.getCurrentToolString());
+    });
+    this.infoText = infoMenu.add(obj, "Info");
+    this.objectNameText = infoMenu.add(obj, "ObjectName");
+
+    infoMenu.open();
+  }
+
+  buildDebugMenu() {
+    const debugMenu = this.gui.addFolder("Debug");
+    const _manager = this.manager;
+    const handler = {
+      "Print nodes": function () {
+        console.log(_manager.map.nodes);
+      },
+      "Print edges": function () {
+        console.log(_manager.map.edges);
+      },
+    };
+
+    debugMenu.add(handler, "Print nodes");
+    debugMenu.add(handler, "Print edges");
+    debugMenu.open();
+  }
+
+  setInfoText(text: string) {
+    this.infoText.setValue(text);
+  }
+
+  setObjectNameText(name: string) {
+    this.objectNameText.setValue(name);
   }
 
   buildExampleMenu() {

@@ -3,20 +3,23 @@ import { Manager } from "../Manager";
 import { Tools } from "./ToolState";
 import * as THREE from "three";
 
-export class ToolHandlerBase{
+export class ToolHandlerBase {
   tool: Tools;
-  manager: Manager
+  manager: Manager;
 
-  constructor(manager: Manager){
-    this.tool = Tools.None;
+  constructor(manager: Manager) {
+    this.tool = Tools.Select;
     this.manager = manager;
   }
 
-  onPointerDown(event: PointerEvent, intersect: Intersection){
-    console.log("Unimplemented onPointDown")
+  onPointerDown(event: PointerEvent, intersect: Intersection) {
+    console.log("Unimplemented onPointDown");
   }
 
-  onPointerUp(event:PointerEvent){
-    console.log("Unimplemented onPointUp")
+  onPointerUp(event: PointerEvent) {
+    console.log("Unimplemented onPointUp");
   }
+
+  onStart() {}
+  onExit() {}
 }

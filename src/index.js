@@ -35,11 +35,10 @@ function init() {
   });
 
   window.addEventListener("resize", onWindowResize);
+  render();
+}
 
-  /*******
-   * Curves
-   *********/
-
+function initCurve() {
   for (let i = 0; i < splinePointsLength; i++) {
     addSplineObject(positions[i]);
   }
@@ -115,8 +114,6 @@ function init() {
     ),
     new THREE.Vector3(-383.785318791128, 491.1365363371675, 47.869296953772746),
   ]);
-
-  render();
 }
 
 function addSplineObject(position) {
@@ -214,9 +211,9 @@ function load(new_positions) {
 }
 
 function render() {
-  splines.uniform.mesh.visible = params.uniform;
-  splines.centripetal.mesh.visible = params.centripetal;
-  splines.chordal.mesh.visible = params.chordal;
+  // splines.uniform.mesh.visible = params.uniform;
+  // splines.centripetal.mesh.visible = params.centripetal;
+  // splines.chordal.mesh.visible = params.chordal;
   manager.renderer.render(manager.scene, manager.camera);
 }
 

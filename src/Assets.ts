@@ -1,9 +1,16 @@
 import * as THREE from "three";
-import { BoxGeometry, Material, Mesh, MeshLambertMaterial, Object3D, Vector3 } from "three";
+import {
+  BoxGeometry,
+  Material,
+  Mesh,
+  MeshBasicMaterial,
+  MeshLambertMaterial,
+  Object3D,
+  Vector3,
+} from "three";
 import { Manager } from "./Manager";
 
-export class Assets{
-
+export class Assets {
   manager: Manager;
   cubeGeo: BoxGeometry;
   plane: Mesh;
@@ -12,10 +19,10 @@ export class Assets{
   cubeMaterialSelected: MeshLambertMaterial;
   intersectionMaterial: MeshLambertMaterial;
   stationMaterial: MeshLambertMaterial;
-  lineMaterial: Material;
+  connectionMaterial: MeshBasicMaterial;
 
-  constructor(manager: Manager){
-    this.manager = manager
+  constructor(manager: Manager) {
+    this.manager = manager;
 
     // cube
     this.cubeGeo = new THREE.BoxGeometry(50, 50, 50);
@@ -42,6 +49,7 @@ export class Assets{
     this.plane = new THREE.Mesh(planeGeometry, planeMaterial);
     this.plane.position.y = -200;
     this.plane.receiveShadow = true;
+    this.plane.name = "Ground Plane";
     manager.objects.push(this.plane);
     manager.scene.add(this.plane);
 
@@ -51,18 +59,10 @@ export class Assets{
     (helper.material as any).transparent = true;
     manager.scene.add(helper);
 
-    this.lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x0000ff,
-      opacity: 0.35,
+    this.connectionMaterial = new THREE.MeshBasicMaterial({
+      color: 0xa3a3a3,
+      side: THREE.DoubleSide,
+      opacity: 0.4,
     });
-  }
-
-  createCube(pos: Vector3, material: Material): Object3D {
-    const gameObject = new THREE.Mesh(this.manager.assets.cubeGeo, material);
-    gameObject.position.copy(pos);
-    gameObject.position.divideScalar(50).floor().multiplyScalar(50).addScalar(25);
-    this.manager.scene.add(gameObject);
-    this.manager.objects.push(gameObject)
-    return gameObject
   }
 }

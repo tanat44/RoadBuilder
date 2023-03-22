@@ -5,7 +5,14 @@ import { TransformControls } from "three/addons/controls/TransformControls.js";
 import { PathEngine } from "./PathEngine";
 import { ToolState } from "./Tools/ToolState";
 import { MouseHandler } from "./MouseHandler";
-import { Camera, Raycaster, Renderer, Scene, WebGLRenderer } from "three";
+import {
+  Camera,
+  Object3D,
+  Raycaster,
+  Renderer,
+  Scene,
+  WebGLRenderer,
+} from "three";
 import * as THREE from "three";
 import { Assets } from "./Assets";
 import { Ui } from "./Ui";
@@ -20,6 +27,7 @@ export class Manager {
   assets: Assets;
   objects: any[];
   map: Map;
+  static instance: Manager;
 
   // Threejs
   ui: Ui;
@@ -32,6 +40,8 @@ export class Manager {
   orbitControl: OrbitControls;
 
   constructor() {
+    Manager.instance = this;
+
     this.objects = [];
     this.raycaster = new THREE.Raycaster();
     this.setupScene();
@@ -104,27 +114,36 @@ export class Manager {
     this.orbitControl.damping = 0.2;
   }
 
-  removeObject(obj: any) {
+  removeObject(obj: Object3D) {
     const index = this.objects.indexOf(obj);
     if (index > -1) {
       this.objects.splice(index, 1);
-      this.scene.remove(obj)
+      this.scene.remove(obj);
     }
   }
 
-  resetScene(){
-    this.objects.map(obj => this.scene.remove(obj))
-    this.objects = []
+  resetScene() {
+    this.objects.map((obj) => this.scene.remove(obj));
+    this.objects = [];
   }
 
-  save(){
-    localStorage.setItem(STORAGE_SAVE_KEY, JSON.stringify(this.map.getSaveData()))
+  save() {
+    localStorage.setItem(
+      STORAGE_SAVE_KEY,
+      JSON.stringify(this.map.getSaveData())
+    );
   }
 
-  load(){
-    const data = localStorage.getItem(STORAGE_SAVE_KEY)
-    this.map = new Map(this)
-    this.map.load(JSON.parse(data) as MapSaveData)
-    this.render()
+  load() {
+    const data = localStorage.getItem(STORAGE_SAVE_KEY);
+    this.map = new Map(this);
+    this.map.load(JSON.parse(data) as MapSaveData);
+    this.render();
+  }
+
+  addGameObjectToScene(gameObject: Object3D) {
+    this.scene.add(gameObject);
+    this.objects.push(gameObject);
+    this.render();
   }
 }

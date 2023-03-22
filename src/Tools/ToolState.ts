@@ -1,33 +1,43 @@
 export enum Tools {
-  None,
+  Select,
   Delete,
   Intersection,
   Station,
   Move,
-  Connect,
+  Connection,
 }
 
+export type onToolChange =
+  | ((oldTool: Tools, newTool: Tools) => void)
+  | (() => void);
+
 export class ToolState {
-  function: Tools;
+  tool: Tools;
   selectedObject: THREE.Mesh | null;
-  onToolChange: ()=> void;
+  onToolChange: onToolChange[];
 
   constructor() {
-    this.function = Tools.None;
+    this.tool = Tools.Select;
     this.selectedObject = null;
+    this.onToolChange = [];
   }
 
   changeTool(newTool: Tools): void {
+    const oldTool = this.tool;
     this.selectedObject = null;
-    this.function = newTool;
-    this.onToolChange();
+    this.tool = newTool;
+    this.onToolChange.forEach((f) => f(oldTool, newTool));
+  }
+
+  subscribeToolChange(f: onToolChange) {
+    this.onToolChange.push(f);
   }
 
   getCurrentToolString(): string {
-    return Tools[this.function];
+    return Tools[this.tool];
   }
 
   getCurrentTool(): Tools {
-    return this.function;
+    return this.tool;
   }
 }
