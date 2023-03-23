@@ -13,16 +13,16 @@ export class Edge {
     this.numberOfLanes = 2;
     this.from = from;
     this.to = to;
-    this.gameObject = this.createEdge();
+    this.gameObject = this.createGameObject();
     this.gameObject.name = `Edge-${Edge.lastId}`;
     Edge.lastId++;
   }
 
-  createEdge(): Object3D {
+  createGameObject(): Object3D {
     const geometry = new THREE.PlaneGeometry(1, 1); // long stick on x-axis
     const plane = new THREE.Mesh(
       geometry,
-      Manager.instance.assets.connectionMaterial
+      Manager.instance.assets.edgeMaterial
     );
     this.updateEdgeTransform(plane);
     Manager.instance.addGameObjectToScene(plane);
@@ -46,6 +46,12 @@ export class Edge {
       new Quaternion().setFromEuler(new Euler(MathUtils.degToRad(90), 0, 0))
     );
     plane.setRotationFromQuaternion(q);
+  }
+
+  getDirection(fromNode: Node): Vector3 {
+    let dir = this.to.getPosition().sub(this.from.getPosition()).normalize();
+    if (fromNode === this.to) dir.multiplyScalar(-1);
+    return dir;
   }
 
   getSaveData(): EdgeSaveData {

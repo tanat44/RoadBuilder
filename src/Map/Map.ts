@@ -2,16 +2,19 @@ import { Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
 import { Edge, EdgeSaveData } from "./Edge";
 import { Node, NodeSaveData, NodeType } from "./Node";
+import { Segment } from "./Segment";
 
 export class Map {
   manager: Manager;
   nodes: Node[];
   edges: Edge[];
+  segments: Segment[];
 
   constructor(manager: Manager) {
     this.manager = manager;
     this.nodes = [];
     this.edges = [];
+    this.segments = [];
   }
 
   createNode(type: NodeType, position: Vector3): Node {
@@ -83,9 +86,40 @@ export class Map {
     });
   }
 
+  deleteSegment() {
+    this.segments.forEach((s) => {
+      this.manager.removeObject(s.gameObject);
+    });
+    this.segments = [];
+  }
+
+  calculateSegment() {
+    this.deleteSegment();
+
+    const laneGap = 10;
+    const d1 = 30; // distance between node and closer control point
+    const d2 = 120; // distance between node and further control point
+    this.nodes.forEach((n) => {
+      const edgePairs = n.getEdgePairs();
+      edgePairs.forEach((pair) => {
+        // make sure direction pointing out from this node
+        const dir1 = pair.edge1.getDirection(n);
+        const dir2 = pair.edge2.getDirection(n);
+
+        // [[ p0 <-- dir1 --- p1 <-- dir1 --- ]] n [[ --- dir2 ---> p2 --- dir2 ---> p3 ]]
+        const p0 = n.getPosition().add(dir1.clone().multiplyScalar(d2));
+        const p1 = n.getPosition().add(dir1.clone().multiplyScalar(d1));
+        const p2 = n.getPosition().add(dir2.clone().multiplyScalar(d1));
+        const p3 = n.getPosition().add(dir2.clone().multiplyScalar(d2));
+        this.segments.push(new Segment([p0, p1, p2, p3]));
+      });
+    });
+  }
+
   clear() {
     this.nodes = [];
     this.edges = [];
+    this.segments = [];
   }
 
   getSaveData(): MapSaveData {

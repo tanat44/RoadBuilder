@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import {
   BoxGeometry,
+  LineBasicMaterial,
   Material,
   Mesh,
   MeshBasicMaterial,
@@ -19,7 +20,8 @@ export class Assets {
   cubeMaterialSelected: MeshLambertMaterial;
   intersectionMaterial: MeshLambertMaterial;
   stationMaterial: MeshLambertMaterial;
-  connectionMaterial: MeshBasicMaterial;
+  edgeMaterial: MeshBasicMaterial;
+  curveMaterial: LineBasicMaterial;
 
   constructor(manager: Manager) {
     this.manager = manager;
@@ -31,6 +33,8 @@ export class Assets {
     this.cubeMaterial = new THREE.MeshLambertMaterial({
       color: 0xfeb74c,
       map: new THREE.TextureLoader().load("public/square-outline-textured.png"),
+      transparent: true,
+      opacity: 0.2,
     });
     this.cubeMaterialSelected = this.cubeMaterial.clone();
     this.cubeMaterialSelected.color.setHex("0xff0000" as any);
@@ -38,6 +42,7 @@ export class Assets {
     this.intersectionMaterial.color.setHex("0xaaaaaa" as any);
     this.stationMaterial = this.cubeMaterial.clone();
     this.stationMaterial.color.setHex("0x11ff00" as any);
+    this.curveMaterial = new LineBasicMaterial({ color: "#1500ff" });
 
     const planeGeometry = new THREE.PlaneGeometry(2000, 2000);
     planeGeometry.rotateX(-Math.PI / 2);
@@ -59,10 +64,11 @@ export class Assets {
     (helper.material as any).transparent = true;
     manager.scene.add(helper);
 
-    this.connectionMaterial = new THREE.MeshBasicMaterial({
+    this.edgeMaterial = new THREE.MeshBasicMaterial({
       color: 0xa3a3a3,
       side: THREE.DoubleSide,
       opacity: 0.4,
+      transparent: true,
     });
   }
 }

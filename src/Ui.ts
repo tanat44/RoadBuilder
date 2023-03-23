@@ -64,6 +64,9 @@ export class Ui {
       Load: function () {
         _manager.load();
       },
+      CalculateSegment: function () {
+        _manager.map.calculateSegment();
+      },
     };
 
     mainMenu.add(handler, "Select");
@@ -73,6 +76,7 @@ export class Ui {
     mainMenu.add(handler, "Connection");
     mainMenu.add(handler, "Save");
     mainMenu.add(handler, "Load");
+    mainMenu.add(handler, "CalculateSegment").name("Calculate segment");
 
     mainMenu.open();
   }

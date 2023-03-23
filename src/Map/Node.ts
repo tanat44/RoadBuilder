@@ -8,6 +8,11 @@ export enum NodeType {
   Intersection,
 }
 
+export type EdgePair = {
+  edge1: Edge;
+  edge2: Edge;
+};
+
 export class Node {
   type: NodeType;
   edges: Edge[];
@@ -21,7 +26,7 @@ export class Node {
       type === NodeType.Intersection
         ? Manager.instance.assets.intersectionMaterial
         : Manager.instance.assets.stationMaterial;
-    this.gameObject = this.createCube(position, material);
+    this.gameObject = this.createGameObject(position, material);
     this.gameObject.name = `Node-${Node.lastId}`;
     Node.lastId++;
   }
@@ -34,7 +39,7 @@ export class Node {
     };
   }
 
-  createCube(pos: Vector3, material: Material): Object3D {
+  createGameObject(pos: Vector3, material: Material): Object3D {
     const gameObject = new THREE.Mesh(
       Manager.instance.assets.cubeGeo,
       material
@@ -49,6 +54,10 @@ export class Node {
     return gameObject;
   }
 
+  getPosition(): Vector3 {
+    return this.gameObject.position.clone();
+  }
+
   removeEdge(edge: Edge) {
     const index = this.edges.indexOf(edge);
     if (index === -1) return;
@@ -57,6 +66,19 @@ export class Node {
 
   getName(): string {
     return this.gameObject.name;
+  }
+
+  getEdgePairs(): EdgePair[] {
+    let output: EdgePair[] = [];
+    for (let i = 0; i < this.edges.length; ++i) {
+      for (let j = i + 1; j < this.edges.length; ++j) {
+        output.push({
+          edge1: this.edges[i],
+          edge2: this.edges[j],
+        });
+      }
+    }
+    return output;
   }
 }
 
