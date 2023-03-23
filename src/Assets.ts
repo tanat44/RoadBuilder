@@ -34,7 +34,7 @@ export class Assets {
       color: 0xfeb74c,
       map: new THREE.TextureLoader().load("public/square-outline-textured.png"),
       transparent: true,
-      opacity: 0.2,
+      opacity: 0.4,
     });
     this.cubeMaterialSelected = this.cubeMaterial.clone();
     this.cubeMaterialSelected.color.setHex("0xff0000" as any);

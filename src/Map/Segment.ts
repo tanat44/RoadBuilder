@@ -1,6 +1,8 @@
 import { Manager } from "./../Manager";
 import { Object3D, Vector3 } from "three";
 import * as THREE from "three";
+import { EndPointControlPoints } from "./types";
+import { Edge } from "./Edge";
 
 export class Segment {
   controlPoints: Vector3[];
@@ -42,5 +44,37 @@ export class Segment {
       distance += points[i].distanceTo(points[i + 1]);
     }
     return distance;
+  }
+
+  static createSegmentEndPointControlPoints(
+    eps1: EndPointControlPoints[],
+    eps2: EndPointControlPoints[],
+    reversePair: boolean = false
+  ): Segment[] {
+    const segments: Segment[] = [];
+    const cpPairs = Edge.pairEndPointControlPoints(eps1, eps2);
+    cpPairs.forEach((cpPair) => {
+      const cp1 = cpPair.cp1;
+      const cp2 = cpPair.cp2;
+      if (!reversePair)
+        segments.push(
+          new Segment([
+            cp1.farPoint,
+            cp1.nearPoint,
+            cp2.nearPoint,
+            cp2.farPoint,
+          ])
+        );
+      else
+        segments.push(
+          new Segment([
+            cp1.nearPoint,
+            cp1.farPoint,
+            cp2.farPoint,
+            cp2.nearPoint,
+          ])
+        );
+    });
+    return segments;
   }
 }

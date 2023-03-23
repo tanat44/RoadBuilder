@@ -1,8 +1,13 @@
+import {
+  CLOSE_CONTROL_POINT_DISTANCE as NEAR_CONTROL_POINT_DISTANCE,
+  FAR_CONTROL_POINT_DISTANCE,
+} from "./../Const";
 import { Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
-import { Edge, EdgeSaveData } from "./Edge";
-import { Node, NodeSaveData, NodeType } from "./Node";
+import { Edge, EdgeSaveData, EdgeType } from "./Edge";
+import { EdgePair, Node, NodeSaveData, NodeType } from "./Node";
 import { Segment } from "./Segment";
+import { EndPointControlPoints } from "./types";
 
 export class Map {
   manager: Manager;
@@ -96,24 +101,77 @@ export class Map {
   calculateSegment() {
     this.deleteSegment();
 
-    const laneGap = 10;
-    const d1 = 30; // distance between node and closer control point
-    const d2 = 120; // distance between node and further control point
+    // segment at intersection
     this.nodes.forEach((n) => {
       const edgePairs = n.getEdgePairs();
-      edgePairs.forEach((pair) => {
-        // make sure direction pointing out from this node
-        const dir1 = pair.edge1.getDirection(n);
-        const dir2 = pair.edge2.getDirection(n);
-
-        // [[ p0 <-- dir1 --- p1 <-- dir1 --- ]] n [[ --- dir2 ---> p2 --- dir2 ---> p3 ]]
-        const p0 = n.getPosition().add(dir1.clone().multiplyScalar(d2));
-        const p1 = n.getPosition().add(dir1.clone().multiplyScalar(d1));
-        const p2 = n.getPosition().add(dir2.clone().multiplyScalar(d1));
-        const p3 = n.getPosition().add(dir2.clone().multiplyScalar(d2));
-        this.segments.push(new Segment([p0, p1, p2, p3]));
+      edgePairs.forEach((edgePair) => {
+        const e1 = edgePair.edge1;
+        const e2 = edgePair.edge2;
+        const eps1 = e1.getControlPoints(
+          n.getPosition(),
+          e1.getDirection(n),
+          NEAR_CONTROL_POINT_DISTANCE,
+          FAR_CONTROL_POINT_DISTANCE
+        );
+        const eps2 = e2.getControlPoints(
+          n.getPosition(),
+          e2.getDirection(n),
+          NEAR_CONTROL_POINT_DISTANCE,
+          FAR_CONTROL_POINT_DISTANCE
+        );
+        const newSegments = Segment.createSegmentEndPointControlPoints(
+          eps1,
+          eps2
+        );
+        this.segments = this.segments.concat(newSegments);
       });
     });
+
+    // segment to station
+    const localRoadEdges = this.filterEdges(EdgeType.LocalRoad);
+    localRoadEdges.forEach((e) => {
+      const eps1 = e.getStationControlPoints(0, NEAR_CONTROL_POINT_DISTANCE);
+      const intersectionNode = e.getNodeByType(NodeType.Intersection);
+      const eps2 = e.getControlPoints(
+        intersectionNode.getPosition(),
+        e.getDirection(intersectionNode),
+        FAR_CONTROL_POINT_DISTANCE,
+        FAR_CONTROL_POINT_DISTANCE
+      );
+      const newSegments = Segment.createSegmentEndPointControlPoints(
+        eps1,
+        eps2,
+        true
+      );
+      this.segments = this.segments.concat(newSegments);
+    });
+
+    // segment between intersection
+    const highwayEdges = this.filterEdges(EdgeType.Highway);
+    highwayEdges.forEach((e) => {
+      const eps1 = e.getControlPoints(
+        e.from.getPosition(),
+        e.getDirection(e.from),
+        FAR_CONTROL_POINT_DISTANCE,
+        FAR_CONTROL_POINT_DISTANCE
+      );
+      const eps2 = e.getControlPoints(
+        e.to.getPosition(),
+        e.getDirection(e.to),
+        FAR_CONTROL_POINT_DISTANCE,
+        FAR_CONTROL_POINT_DISTANCE
+      );
+      const newSegments = Segment.createSegmentEndPointControlPoints(
+        eps1,
+        eps2,
+        true
+      );
+      this.segments = this.segments.concat(newSegments);
+    });
+  }
+
+  filterEdges(type: EdgeType): Edge[] {
+    return this.edges.filter((e) => e.getRoadType() === type);
   }
 
   clear() {

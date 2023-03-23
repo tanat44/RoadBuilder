@@ -35,7 +35,6 @@ export class Manager {
   scene: Scene;
   camera: PerspectiveCamera;
   raycaster: Raycaster;
-  render: () => void;
   renderer: WebGLRenderer;
   transformControl: TransformControls;
   orbitControl: OrbitControls;
@@ -124,6 +123,7 @@ export class Manager {
       this.renderer.domElement
     );
     this.orbitControl.damping = 0.2;
+    this.orbitControl.addEventListener("change", () => this.render());
   }
 
   removeObject(obj: Object3D) {
@@ -164,5 +164,9 @@ export class Manager {
     manager.camera.updateProjectionMatrix();
     manager.renderer.setSize(window.innerWidth, window.innerHeight);
     manager.render();
+  }
+
+  render() {
+    this.renderer.render(this.scene, this.camera);
   }
 }
