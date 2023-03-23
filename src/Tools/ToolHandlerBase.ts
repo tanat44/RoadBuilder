@@ -12,14 +12,9 @@ export class ToolHandlerBase {
     this.manager = manager;
   }
 
-  onPointerDown(event: PointerEvent, intersect: Intersection) {
-    console.log("Unimplemented onPointDown");
-  }
-
-  onPointerUp(event: PointerEvent) {
-    console.log("Unimplemented onPointUp");
-  }
-
+  onPointerDown(event: PointerEvent, intersect: Intersection) {}
+  onPointerMove(event: PointerEvent, intersect: Intersection) {}
+  onPointerUp(event: PointerEvent, intersect: Intersection) {}
   onStart() {}
   onExit() {}
 }

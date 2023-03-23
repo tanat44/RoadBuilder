@@ -77,6 +77,12 @@ export class Map {
     }
   }
 
+  recalculateEdge(node: Node) {
+    node.edges.forEach((e) => {
+      e.updateEdgeTransform(e.gameObject);
+    });
+  }
+
   clear() {
     this.nodes = [];
     this.edges = [];

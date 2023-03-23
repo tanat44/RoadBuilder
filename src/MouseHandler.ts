@@ -1,3 +1,4 @@
+import { ToolHandlerSelect } from "./Tools/ToolHandlerSelect";
 import { ToolHandlerStation } from "./Tools/ToolHandlerStation";
 import { Tools } from "./Tools/ToolState";
 import { Manager } from "./Manager";
@@ -10,16 +11,10 @@ import { ToolHandlerConnection } from "./Tools/ToolHandlerConnection";
 
 export class MouseHandler {
   manager: Manager;
-  pointer: Vector2;
-  onUpPosition: Vector2;
-  onDownPosition: Vector2;
   toolHandlers: Map<Tools, ToolHandlerBase>;
 
   constructor(manager: Manager) {
     this.manager = manager;
-    this.pointer = new THREE.Vector2();
-    this.onUpPosition = new THREE.Vector2();
-    this.onDownPosition = new THREE.Vector2();
     this.toolHandlers = new Map<Tools, ToolHandlerBase>();
 
     this.registerEventListener();
@@ -33,7 +28,7 @@ export class MouseHandler {
   registerEventListener() {
     document.addEventListener("pointerdown", (e) => this.onPointerDown(e));
     document.addEventListener("pointerup", (e) => this.onPointerUp(e));
-    // document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointermove", (e) => this.onPointerMove(e));
   }
 
   handleToolChange(oldTool: Tools, newTool: Tools) {
@@ -44,6 +39,7 @@ export class MouseHandler {
   }
 
   registerToolHandler() {
+    this.toolHandlers.set(Tools.Select, new ToolHandlerSelect(this.manager));
     this.toolHandlers.set(Tools.Delete, new ToolHandlerDelete(this.manager));
     this.toolHandlers.set(Tools.Station, new ToolHandlerStation(this.manager));
     this.toolHandlers.set(
@@ -56,35 +52,14 @@ export class MouseHandler {
     );
   }
 
-  onPointerDown(event: PointerEvent) {
-    const intersect = this.getIntersectionPoint(event);
-    if (!intersect) return;
-
-    // set object name in ui
-    if (intersect.object) {
-      this.manager.ui.setObjectNameText(intersect.object.name);
-    }
-
-    const currentTool = this.manager.toolState.getCurrentTool();
-    if (this.toolHandlers.has(currentTool))
-      this.toolHandlers.get(currentTool).onPointerDown(event, intersect);
-    else
-      console.log(
-        `No handler for tool ${this.manager.toolState.getCurrentToolString()}`
-      );
-    this.manager.render();
-  }
-
   getIntersectionPoint(event: PointerEvent): Intersection {
-    this.onDownPosition.x = event.clientX;
-    this.onDownPosition.y = event.clientY;
-
-    this.pointer.set(
+    const pointer = new Vector2();
+    pointer.set(
       (event.clientX / window.innerWidth) * 2 - 1,
       -(event.clientY / window.innerHeight) * 2 + 1
     );
 
-    this.manager.raycaster.setFromCamera(this.pointer, this.manager.camera);
+    this.manager.raycaster.setFromCamera(pointer, this.manager.camera);
 
     const intersects = this.manager.raycaster.intersectObjects(
       this.manager.objects,
@@ -95,28 +70,52 @@ export class MouseHandler {
     return null;
   }
 
-  onPointerUp(event: PointerEvent) {
-    this.onUpPosition.x = event.clientX;
-    this.onUpPosition.y = event.clientY;
+  onPointerDown(event: PointerEvent) {
+    const intersect = this.getIntersectionPoint(event);
+    if (!intersect) return;
 
-    if (this.onDownPosition.distanceTo(this.onUpPosition) === 0)
-      this.manager.transformControl.detach();
+    // set object name in ui
+    if (intersect.object) {
+      this.manager.ui.setObjectNameText(intersect.object.name);
+    }
+
+    const handler = this.getCurrentToolHandler();
+    if (!handler) return;
+
+    handler.onPointerDown(event, intersect);
+    this.manager.render();
   }
 
-  // onPointerMove(event: any) {
-  //   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  //   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  onPointerMove(event: PointerEvent) {
+    const intersect = this.getIntersectionPoint(event);
+    if (!intersect) return;
 
-  //   raycaster.setFromCamera(pointer, camera);
+    const handler = this.getCurrentToolHandler();
+    if (!handler) return;
 
-  //   const intersects = raycaster.intersectObjects(splineHelperObjects, false);
+    handler.onPointerMove(event, intersect);
+    this.manager.render();
+  }
 
-  //   if (intersects.length > 0) {
-  //     const object = intersects[0].object;
+  onPointerUp(event: PointerEvent) {
+    const intersect = this.getIntersectionPoint(event);
+    if (!intersect) return;
 
-  //     if (object !== transformControl.object) {
-  //       transformControl.attach(object);
-  //     }
-  //   }
-  // }
+    const handler = this.getCurrentToolHandler();
+    if (!handler) return;
+
+    handler.onPointerUp(event, intersect);
+    this.manager.render();
+  }
+
+  getCurrentToolHandler(): ToolHandlerBase | null {
+    const currentTool = this.manager.toolState.getCurrentTool();
+    if (this.toolHandlers.has(currentTool))
+      return this.toolHandlers.get(currentTool);
+
+    console.log(
+      `No handler for tool ${this.manager.toolState.getCurrentToolString()}`
+    );
+    return null;
+  }
 }

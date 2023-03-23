@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { Manager } from "./Manager";
+import "./main.css";
 
 const splineHelperObjects = [];
 let splinePointsLength = 4;
@@ -34,7 +35,6 @@ function init() {
     updateSplineOutline();
   });
 
-  window.addEventListener("resize", onWindowResize);
   render();
 }
 
@@ -215,13 +215,4 @@ function render() {
   // splines.centripetal.mesh.visible = params.centripetal;
   // splines.chordal.mesh.visible = params.chordal;
   manager.renderer.render(manager.scene, manager.camera);
-}
-
-function onWindowResize() {
-  manager.camera.aspect = window.innerWidth / window.innerHeight;
-  manager.camera.updateProjectionMatrix();
-
-  manager.renderer.setSize(window.innerWidth, window.innerHeight);
-
-  render();
 }

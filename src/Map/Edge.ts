@@ -13,26 +13,32 @@ export class Edge {
     this.numberOfLanes = 2;
     this.from = from;
     this.to = to;
-    this.gameObject = this.createEdge(
-      from.gameObject.position,
-      to.gameObject.position
-    );
+    this.gameObject = this.createEdge();
     this.gameObject.name = `Edge-${Edge.lastId}`;
     Edge.lastId++;
   }
 
-  createEdge(p1: Vector3, p2: Vector3): Object3D {
-    const width = 10;
-    const distance = p1.distanceTo(p2);
-    const geometry = new THREE.PlaneGeometry(distance, width);
+  createEdge(): Object3D {
+    const geometry = new THREE.PlaneGeometry(1, 1); // long stick on x-axis
     const plane = new THREE.Mesh(
       geometry,
       Manager.instance.assets.connectionMaterial
     );
+    this.updateEdgeTransform(plane);
+    Manager.instance.addGameObjectToScene(plane);
+    return plane;
+  }
+
+  updateEdgeTransform(plane: Object3D) {
+    const p1 = this.from.gameObject.position.clone();
+    const p2 = this.to.gameObject.position.clone();
+    const width = 10;
+    const distance = p1.distanceTo(p2);
+    plane.scale.set(distance, width, 1);
     const direction = p2.clone().sub(p1).normalize();
+    plane.position.set(0, 0, 0);
     plane.lookAt(direction);
     plane.position.copy(p1).add(direction.multiplyScalar(distance / 2.0));
-
     const q = plane.quaternion;
     q.multiply(
       new Quaternion().setFromEuler(new Euler(0, MathUtils.degToRad(90), 0))
@@ -40,8 +46,6 @@ export class Edge {
       new Quaternion().setFromEuler(new Euler(MathUtils.degToRad(90), 0, 0))
     );
     plane.setRotationFromQuaternion(q);
-    Manager.instance.addGameObjectToScene(plane);
-    return plane;
   }
 
   getSaveData(): EdgeSaveData {

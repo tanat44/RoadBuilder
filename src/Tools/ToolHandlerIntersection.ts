@@ -1,7 +1,6 @@
 import { NodeType } from './../Map/Node';
 import { Intersection } from 'three';
 import { Manager } from '../Manager';
-import { Node } from '../Map/Node';
 import { ToolHandlerBase } from './ToolHandlerBase';
 import { Tools } from './ToolState';
 

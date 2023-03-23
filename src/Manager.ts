@@ -8,6 +8,7 @@ import { MouseHandler } from "./MouseHandler";
 import {
   Camera,
   Object3D,
+  PerspectiveCamera,
   Raycaster,
   Renderer,
   Scene,
@@ -32,7 +33,7 @@ export class Manager {
   // Threejs
   ui: Ui;
   scene: Scene;
-  camera: Camera;
+  camera: PerspectiveCamera;
   raycaster: Raycaster;
   render: () => void;
   renderer: WebGLRenderer;
@@ -88,7 +89,11 @@ export class Manager {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
-    document.body.appendChild(this.renderer.domElement);
+
+    const container = document.getElementById("container");
+    container.appendChild(this.renderer.domElement);
+
+    window.addEventListener("resize", () => this.onWindowResize(this));
   }
 
   setupTransformControl() {
@@ -96,13 +101,20 @@ export class Manager {
       this.camera,
       this.renderer.domElement
     );
-    this.transformControl.addEventListener("change", this.render);
-    this.transformControl.addEventListener(
-      "dragging-changed",
-      function (event: any) {
-        this.orbitControl.enabled = !event.value;
+    this.transformControl.showY = false;
+    this.transformControl.addEventListener("change", () => this.render());
+    this.transformControl.addEventListener("dragging-changed", (event: any) => {
+      Manager.instance.orbitControl.enabled = !event.value;
+    });
+    const _manager = this;
+    this.transformControl.addEventListener("objectChange", () => {
+      const targetObj = _manager.transformControl.object;
+      const node = _manager.map.findNodeGameObject(targetObj);
+      if (node) {
+        _manager.map.recalculateEdge(node);
+        _manager.render();
       }
-    );
+    });
     this.scene.add(this.transformControl);
   }
 
@@ -145,5 +157,12 @@ export class Manager {
     this.scene.add(gameObject);
     this.objects.push(gameObject);
     this.render();
+  }
+
+  onWindowResize(manager: Manager) {
+    manager.camera.aspect = window.innerWidth / window.innerHeight;
+    manager.camera.updateProjectionMatrix();
+    manager.renderer.setSize(window.innerWidth, window.innerHeight);
+    manager.render();
   }
 }
