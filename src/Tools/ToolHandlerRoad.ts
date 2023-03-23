@@ -1,10 +1,10 @@
 import { Intersection } from "three";
 import { Manager } from "../Manager";
-import { Node } from "../Map/Node";
+import { Node } from "../Layout/Node";
 import { ToolHandlerBase } from "./ToolHandlerBase";
 import { Tools } from "./ToolState";
 
-export class ToolHandlerConnection extends ToolHandlerBase {
+export class ToolHandlerRoad extends ToolHandlerBase {
   selectedNodes: Node[];
 
   constructor(manager: Manager) {

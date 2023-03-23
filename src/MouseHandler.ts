@@ -7,7 +7,7 @@ import { Intersection, Object3D, Vector2 } from "three";
 import { ToolHandlerBase } from "./Tools/ToolHandlerBase";
 import { ToolHandlerIntersection } from "./Tools/ToolHandlerIntersection";
 import { ToolHandlerDelete } from "./Tools/ToolHandlerDelete";
-import { ToolHandlerConnection } from "./Tools/ToolHandlerConnection";
+import { ToolHandlerRoad } from "./Tools/ToolHandlerRoad";
 
 export class MouseHandler {
   manager: Manager;
@@ -46,10 +46,7 @@ export class MouseHandler {
       Tools.Intersection,
       new ToolHandlerIntersection(this.manager)
     );
-    this.toolHandlers.set(
-      Tools.Connection,
-      new ToolHandlerConnection(this.manager)
-    );
+    this.toolHandlers.set(Tools.Road, new ToolHandlerRoad(this.manager));
   }
 
   getIntersectionPoint(event: PointerEvent): Intersection {

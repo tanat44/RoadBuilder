@@ -55,8 +55,8 @@ export class Ui {
       Station: function () {
         _manager.toolState.changeTool(Tools.Station);
       },
-      Connection: function () {
-        _manager.toolState.changeTool(Tools.Connection);
+      Road: function () {
+        _manager.toolState.changeTool(Tools.Road);
       },
       Save: function () {
         _manager.save();
@@ -73,7 +73,7 @@ export class Ui {
     mainMenu.add(handler, "Delete");
     mainMenu.add(handler, "Intersection");
     mainMenu.add(handler, "Station");
-    mainMenu.add(handler, "Connection");
+    mainMenu.add(handler, "Road");
     mainMenu.add(handler, "Save");
     mainMenu.add(handler, "Load");
     mainMenu.add(handler, "CalculateSegment").name("Calculate segment");
@@ -105,13 +105,13 @@ export class Ui {
       "Print nodes": function () {
         console.log(_manager.map.nodes);
       },
-      "Print edges": function () {
-        console.log(_manager.map.edges);
+      "Print roads": function () {
+        console.log(_manager.map.roads);
       },
     };
 
     debugMenu.add(handler, "Print nodes");
-    debugMenu.add(handler, "Print edges");
+    debugMenu.add(handler, "Print roads");
     debugMenu.open();
   }
 

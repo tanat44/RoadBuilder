@@ -6,18 +6,16 @@ import { PathEngine } from "./PathEngine";
 import { ToolState } from "./Tools/ToolState";
 import { MouseHandler } from "./MouseHandler";
 import {
-  Camera,
   Object3D,
   PerspectiveCamera,
   Raycaster,
-  Renderer,
   Scene,
   WebGLRenderer,
 } from "three";
 import * as THREE from "three";
 import { Assets } from "./Assets";
 import { Ui } from "./Ui";
-import { Map, MapSaveData } from "./Map/Map";
+import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
 
 export class Manager {
@@ -27,7 +25,7 @@ export class Manager {
   mouseHandler: MouseHandler;
   assets: Assets;
   objects: any[];
-  map: Map;
+  map: Layout;
   static instance: Manager;
 
   // Threejs
@@ -54,7 +52,9 @@ export class Manager {
     this.mouseHandler = new MouseHandler(this);
     this.assets = new Assets(this);
     this.ui = new Ui(this);
-    this.map = new Map(this);
+    this.map = new Layout(this);
+
+    this.render();
   }
 
   setupLighting() {
@@ -148,7 +148,7 @@ export class Manager {
 
   load() {
     const data = localStorage.getItem(STORAGE_SAVE_KEY);
-    this.map = new Map(this);
+    this.map = new Layout(this);
     this.map.load(JSON.parse(data) as MapSaveData);
     this.render();
   }

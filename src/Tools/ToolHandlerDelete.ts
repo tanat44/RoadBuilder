@@ -1,4 +1,4 @@
-import { Map } from './../Map/Map';
+import { Layout } from "../Layout/Layout";
 import { Intersection } from "three";
 import { Manager } from "../Manager";
 import { ToolHandlerBase } from "./ToolHandlerBase";
@@ -13,8 +13,8 @@ export class ToolHandlerDelete extends ToolHandlerBase {
   onPointerDown(event: PointerEvent, intersect: Intersection) {
     if (event.button !== 0 || !intersect || !intersect.object) return;
     if (intersect.object !== this.manager.assets.plane) {
-      const node = this.manager.map.findNodeGameObject(intersect.object)
-      if (!node) return
+      const node = this.manager.map.findNodeGameObject(intersect.object);
+      if (!node) return;
       this.manager.map.removeNode(node);
     }
   }

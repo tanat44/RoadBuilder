@@ -1,6 +1,6 @@
 import { Material, Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
-import { Edge } from "./Edge";
+import { Road } from "./Road";
 import * as THREE from "three";
 
 export enum NodeType {
@@ -8,20 +8,20 @@ export enum NodeType {
   Intersection,
 }
 
-export type EdgePair = {
-  edge1: Edge;
-  edge2: Edge;
+export type RoadPair = {
+  road1: Road;
+  road2: Road;
 };
 
 export class Node {
   type: NodeType;
-  edges: Edge[];
+  roads: Road[];
   gameObject: Object3D;
   static lastId: number = 0;
 
   constructor(type: NodeType, position: Vector3) {
     this.type = type;
-    this.edges = [];
+    this.roads = [];
     let material =
       type === NodeType.Intersection
         ? Manager.instance.assets.intersectionMaterial
@@ -58,23 +58,23 @@ export class Node {
     return this.gameObject.position.clone();
   }
 
-  removeEdge(edge: Edge) {
-    const index = this.edges.indexOf(edge);
+  removeEdge(edge: Road) {
+    const index = this.roads.indexOf(edge);
     if (index === -1) return;
-    this.edges.splice(index, 1);
+    this.roads.splice(index, 1);
   }
 
   getName(): string {
     return this.gameObject.name;
   }
 
-  getEdgePairs(): EdgePair[] {
-    let output: EdgePair[] = [];
-    for (let i = 0; i < this.edges.length; ++i) {
-      for (let j = i + 1; j < this.edges.length; ++j) {
+  getRoadPairs(): RoadPair[] {
+    let output: RoadPair[] = [];
+    for (let i = 0; i < this.roads.length; ++i) {
+      for (let j = i + 1; j < this.roads.length; ++j) {
         output.push({
-          edge1: this.edges[i],
-          edge2: this.edges[j],
+          road1: this.roads[i],
+          road2: this.roads[j],
         });
       }
     }

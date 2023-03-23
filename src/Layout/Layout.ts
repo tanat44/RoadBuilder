@@ -1,24 +1,20 @@
-import {
-  CLOSE_CONTROL_POINT_DISTANCE as NEAR_CONTROL_POINT_DISTANCE,
-  FAR_CONTROL_POINT_DISTANCE,
-} from "./../Const";
 import { Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
-import { Edge, EdgeSaveData, EdgeType } from "./Edge";
-import { EdgePair, Node, NodeSaveData, NodeType } from "./Node";
+import { Road, EdgeSaveData, RoadType } from "./Road";
+import { Node, NodeSaveData, NodeType } from "./Node";
 import { Segment } from "./Segment";
-import { EndPointControlPoints } from "./types";
+import { SwitchPoint } from "../NavigationMap/SwitchPoint";
 
-export class Map {
+export class Layout {
   manager: Manager;
   nodes: Node[];
-  edges: Edge[];
+  roads: Road[];
   segments: Segment[];
 
   constructor(manager: Manager) {
     this.manager = manager;
     this.nodes = [];
-    this.edges = [];
+    this.roads = [];
     this.segments = [];
   }
 
@@ -28,16 +24,16 @@ export class Map {
     return node;
   }
 
-  createEdge(fromNode: Node, toNode: Node): Edge {
+  createEdge(fromNode: Node, toNode: Node): Road {
     if (this.isNeighbor(fromNode, toNode)) {
       this.manager.ui.setInfoText("Duplicate edge");
       return null;
     }
 
-    const edge = new Edge(fromNode, toNode);
-    fromNode.edges.push(edge);
-    toNode.edges.push(edge);
-    this.edges.push(edge);
+    const edge = new Road(fromNode, toNode);
+    fromNode.roads.push(edge);
+    toNode.roads.push(edge);
+    this.roads.push(edge);
     return edge;
   }
 
@@ -50,8 +46,8 @@ export class Map {
   }
 
   isNeighbor(node1: Node, node2: Node): boolean {
-    for (let i = 0; i < node1.edges.length; ++i) {
-      const e = node1.edges[i];
+    for (let i = 0; i < node1.roads.length; ++i) {
+      const e = node1.roads[i];
       if (
         e.from.getName() === node2.getName() ||
         e.to.getName() === node2.getName()
@@ -72,7 +68,7 @@ export class Map {
 
     // remove edge
     let edgeIndexToRemove: number[] = [];
-    this.edges.forEach((e, idx) => {
+    this.roads.forEach((e, idx) => {
       if (e.from !== node && e.to !== node) return;
       if (e.from === node) e.from.removeEdge(e);
       if (e.to === node) e.to.removeEdge(e);
@@ -81,13 +77,13 @@ export class Map {
     });
 
     for (let i = edgeIndexToRemove.length - 1; i >= 0; --i) {
-      this.edges.splice(edgeIndexToRemove[i], 1);
+      this.roads.splice(edgeIndexToRemove[i], 1);
     }
   }
 
   recalculateEdge(node: Node) {
-    node.edges.forEach((e) => {
-      e.updateEdgeTransform(e.gameObject);
+    node.roads.forEach((r) => {
+      r.recalculate();
     });
   }
 
@@ -101,82 +97,59 @@ export class Map {
   calculateSegment() {
     this.deleteSegment();
 
-    // segment at intersection
+    // road <> road segment
     this.nodes.forEach((n) => {
-      const edgePairs = n.getEdgePairs();
-      edgePairs.forEach((edgePair) => {
-        const e1 = edgePair.edge1;
-        const e2 = edgePair.edge2;
-        const eps1 = e1.getControlPoints(
-          n.getPosition(),
-          e1.getDirection(n),
-          NEAR_CONTROL_POINT_DISTANCE,
-          FAR_CONTROL_POINT_DISTANCE
-        );
-        const eps2 = e2.getControlPoints(
-          n.getPosition(),
-          e2.getDirection(n),
-          NEAR_CONTROL_POINT_DISTANCE,
-          FAR_CONTROL_POINT_DISTANCE
-        );
-        const newSegments = Segment.createSegmentEndPointControlPoints(
-          eps1,
-          eps2
+      const roadPairs = n.getRoadPairs();
+      roadPairs.forEach((roadPair) => {
+        const r1 = roadPair.road1;
+        const r2 = roadPair.road2;
+        const sps1 = r1.getSwitchPointAt(n);
+        const sps2 = r2.getSwitchPointAt(n);
+        const pairs = SwitchPoint.pairSwitchPoint(sps1, sps2);
+        const newSegments = Segment.createSegmentFromPairSwitchPoints(
+          pairs,
+          false
         );
         this.segments = this.segments.concat(newSegments);
       });
     });
 
-    // segment to station
-    const localRoadEdges = this.filterEdges(EdgeType.LocalRoad);
-    localRoadEdges.forEach((e) => {
-      const eps1 = e.getStationControlPoints(0, NEAR_CONTROL_POINT_DISTANCE);
-      const intersectionNode = e.getNodeByType(NodeType.Intersection);
-      const eps2 = e.getControlPoints(
-        intersectionNode.getPosition(),
-        e.getDirection(intersectionNode),
-        FAR_CONTROL_POINT_DISTANCE,
-        FAR_CONTROL_POINT_DISTANCE
-      );
-      const newSegments = Segment.createSegmentEndPointControlPoints(
-        eps1,
-        eps2,
+    // road <> station segment
+    const localRoads = this.getRoadByType(RoadType.LocalRoad);
+    localRoads.forEach((r) => {
+      const stationNode = r.getNodeByType(NodeType.Station);
+      const sp1 = r.getSwitchPointAt(stationNode);
+      const intersectionNode = r.getNodeByType(NodeType.Intersection);
+      const sp2 = r.getSwitchPointAt(intersectionNode);
+      const pairs = SwitchPoint.pairSwitchPoint(sp1, sp2);
+      const newSegments = Segment.createSegmentFromPairSwitchPoints(
+        pairs,
         true
       );
       this.segments = this.segments.concat(newSegments);
     });
 
-    // segment between intersection
-    const highwayEdges = this.filterEdges(EdgeType.Highway);
-    highwayEdges.forEach((e) => {
-      const eps1 = e.getControlPoints(
-        e.from.getPosition(),
-        e.getDirection(e.from),
-        FAR_CONTROL_POINT_DISTANCE,
-        FAR_CONTROL_POINT_DISTANCE
-      );
-      const eps2 = e.getControlPoints(
-        e.to.getPosition(),
-        e.getDirection(e.to),
-        FAR_CONTROL_POINT_DISTANCE,
-        FAR_CONTROL_POINT_DISTANCE
-      );
-      const newSegments = Segment.createSegmentEndPointControlPoints(
-        eps1,
-        eps2,
+    // inside road segment
+    const highway = this.getRoadByType(RoadType.Highway);
+    highway.forEach((r) => {
+      const sp1 = r.getSwitchPointAt(r.from);
+      const sp2 = r.getSwitchPointAt(r.to);
+      const pairs = SwitchPoint.pairSwitchPoint(sp1, sp2);
+      const newSegments = Segment.createSegmentFromPairSwitchPoints(
+        pairs,
         true
       );
       this.segments = this.segments.concat(newSegments);
     });
   }
 
-  filterEdges(type: EdgeType): Edge[] {
-    return this.edges.filter((e) => e.getRoadType() === type);
+  getRoadByType(type: RoadType): Road[] {
+    return this.roads.filter((e) => e.getRoadType() === type);
   }
 
   clear() {
     this.nodes = [];
-    this.edges = [];
+    this.roads = [];
     this.segments = [];
   }
 
@@ -203,7 +176,7 @@ export class Map {
         edge.gameObject.name = e.name;
       });
     Node.lastId = data.lastNodeId;
-    Edge.lastId = data.lastEdgeId;
+    Road.lastId = data.lastEdgeId;
   }
 }
 
@@ -214,14 +187,14 @@ export class MapSaveData {
   lastNodeId: number;
   lastEdgeId: number;
 
-  constructor(map: Map) {
+  constructor(map: Layout) {
     this.nodes = [];
     map.nodes.forEach((n) => this.nodes.push(n.getSaveData()));
 
     this.edges = [];
-    map.edges.forEach((e) => this.edges.push(e.getSaveData()));
+    map.roads.forEach((e) => this.edges.push(e.getSaveData()));
 
     this.lastNodeId = Node.lastId;
-    this.lastEdgeId = Edge.lastId;
+    this.lastEdgeId = Road.lastId;
   }
 }

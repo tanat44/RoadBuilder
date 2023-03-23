@@ -4,7 +4,7 @@ export enum Tools {
   Intersection,
   Station,
   Move,
-  Connection,
+  Road,
 }
 
 export type onToolChange =
