@@ -17,6 +17,7 @@ import { Assets } from "./Assets";
 import { Ui } from "./Ui";
 import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
+import { Vehicle } from "./VehicleEmulator/Vehicle";
 
 export class Manager {
   // Data classes
@@ -53,6 +54,8 @@ export class Manager {
     this.assets = new Assets(this);
     this.ui = new Ui(this);
     this.map = new Layout(this);
+
+    const vehicle = new Vehicle();
 
     this.render();
   }

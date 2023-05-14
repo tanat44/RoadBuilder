@@ -59,7 +59,7 @@ export class Assets {
     manager.scene.add(this.plane);
 
     const helper = new THREE.GridHelper(2000, 100);
-    helper.position.y = -199;
+    helper.position.y = 0;
     (helper.material as any).opacity = 0.25;
     (helper.material as any).transparent = true;
     manager.scene.add(helper);
