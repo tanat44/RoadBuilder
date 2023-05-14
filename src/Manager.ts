@@ -38,6 +38,10 @@ export class Manager {
   transformControl: TransformControls;
   orbitControl: OrbitControls;
 
+  // animation loop
+  clock: THREE.Clock;
+  updatableObjects: any[];
+
   constructor() {
     Manager.instance = this;
 
@@ -56,6 +60,8 @@ export class Manager {
     this.map = new Layout(this);
 
     const vehicle = new Vehicle();
+    this.updatableObjects = [];
+    this.updatableObjects.push(vehicle);
 
     this.render();
   }
@@ -91,11 +97,19 @@ export class Manager {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
+    this.clock = new THREE.Clock();
+    this.renderer.setAnimationLoop(() => this.tick());
 
     const container = document.getElementById("container");
     container.appendChild(this.renderer.domElement);
 
     window.addEventListener("resize", () => this.onWindowResize(this));
+  }
+
+  tick() {
+    const dt = Manager.instance.clock.getDelta();
+    this.updatableObjects.map((obj) => obj.tick(dt));
+    this.render();
   }
 
   setupTransformControl() {
