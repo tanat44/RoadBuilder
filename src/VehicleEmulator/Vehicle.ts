@@ -7,6 +7,7 @@ import { Wheel } from "./Wheel";
 
 export class Vehicle {
   // physics
+  previousState: VehicleState;
   state: VehicleState;
 
   // physics constant
@@ -20,6 +21,7 @@ export class Vehicle {
   gameObject: Object3D;
 
   constructor() {
+    this.previousState = new VehicleState();
     this.state = new VehicleState();
     this.centerOfMass = new Vector3(0, 50, 0);
     this.wheelFL = new Wheel(new Vector3(200, 0, -100), true);
@@ -61,8 +63,13 @@ export class Vehicle {
   }
 
   tick(dt: number) {
+    this.previousState.copyState(this.state);
+
+    // integrate a, v
     this.state.velocity.add(this.state.acceleration.clone().multiplyScalar(dt));
     this.state.position.add(this.state.velocity.clone().multiplyScalar(dt));
     this.gameObject.position.copy(this.state.position);
+
+    this.state.updateDirection(this.gameObject.matrixWorld);
   }
 }
