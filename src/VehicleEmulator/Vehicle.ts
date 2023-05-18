@@ -84,7 +84,7 @@ export class Vehicle {
     this.gameObject.add(axesHelper);
   }
 
-  tick(dt: number) {
+  tick(dt: number, lastKeyPress: Set<string>) {
     if (!this.engine) return;
 
     this.previousState.copyState(this.state);
@@ -98,7 +98,7 @@ export class Vehicle {
 
     // Update Velocity
     this.updateVelocity(dt);
-    console.log(this.state.velocity);
+    // console.log(this.state.velocity);
 
     // Update Position
     this.updatePosition(dt);
