@@ -5,15 +5,12 @@ import { DEG2RAD } from "three/src/math/MathUtils";
 import { VehicleState } from "./VehicleState";
 import { Wheel } from "./Wheel";
 import { Engine, Torque } from "./Engine";
-import { RENDER_SCALE } from "../Const";
+import { GRAVITY, RENDER_SCALE } from "../Const";
 import { VectorUtility } from "../VectorUtility";
 
 // ALL METRIC UNIT
 
-type ForceState = {
-  driveRL: number;
-  driveRR: number;
-};
+type Force = Vector3;
 export class Vehicle {
   // physics
   previousState: VehicleState;
@@ -40,10 +37,10 @@ export class Vehicle {
 
     // car
     this.engine = Engine.brzEngine();
-    this.wheelFL = new Wheel(new Vector3(2, 0, -1), true);
-    this.wheelFR = new Wheel(new Vector3(2, 0, 1), true);
-    this.wheelRL = new Wheel(new Vector3(-2, 0, -1));
-    this.wheelRR = new Wheel(new Vector3(-2, 0, 1));
+    this.wheelFL = new Wheel(new Vector3(1.2, 0, -0.9), true, false);
+    this.wheelFR = new Wheel(new Vector3(1.2, 0, 0.9), true, false);
+    this.wheelRL = new Wheel(new Vector3(-1.2, 0, -0.9), false, true);
+    this.wheelRR = new Wheel(new Vector3(-1.2, 0, 0.9), false, true);
 
     this.drawGameObject();
   }
@@ -65,7 +62,9 @@ export class Vehicle {
       width * RENDER_SCALE
     );
     const material = new THREE.MeshStandardMaterial();
-    material.color.setHex(0xdddddd);
+    material.color.setHex(0x000000);
+    material.transparent = true;
+    material.opacity = 0.3;
     this.gameObject = new THREE.Mesh(box, material);
     this.gameObject.position.copy(
       this.centerOfMass.clone().multiplyScalar(RENDER_SCALE)
@@ -90,11 +89,14 @@ export class Vehicle {
     this.previousState.copyState(this.state);
 
     // Update Force
-    this.engine.accelerate(dt);
-    // this.engine.printState();
+    if (lastKeyPress.has("w")) this.engine.accelerate(dt);
+    else this.engine.coast();
+    this.engine.printState();
+
+    const force = this.calculateForce();
 
     // Update Acc
-    this.updateAcceleration();
+    this.updateAcceleration(force);
 
     // Update Velocity
     this.updateVelocity(dt);
@@ -105,21 +107,59 @@ export class Vehicle {
     this.gameObject.position.copy(
       this.state.position.clone().multiplyScalar(RENDER_SCALE)
     );
+
+    // print
+    this.printVelocity();
   }
 
-  updateAcceleration() {
-    const torqueSplitRatio = 0.5; // torque RR / torqueRL
+  calculateNormalForce() {}
 
+  calculateForce(): Force {
+    // x axis (front-back)
+    const torqueSplitRatio = 0.5; // torque RR / torqueRL
     const torqueRL = this.engine.torque * (1 - torqueSplitRatio);
     const torqueRR = this.engine.torque * torqueSplitRatio;
 
     const drivingForceRL = this.wheelRL.getDrivingForceMagnitude(torqueRL);
     const drivingForceRR = this.wheelRR.getDrivingForceMagnitude(torqueRR);
+    const engineForce = drivingForceRL + drivingForceRR;
+    const dragForce = 0;
+    const fx_norm = engineForce + dragForce;
+    const fx = this.state.forward.clone().multiplyScalar(fx_norm);
 
-    const totalForwardForce = drivingForceRL + drivingForceRR;
+    // y axis (normal)
+    const rearHubDistance =
+      Math.abs(this.wheelRL.hubCenter.x + this.wheelRR.hubCenter.x) / 2;
+    const frontHubDistance =
+      Math.abs(this.wheelFL.hubCenter.x + this.wheelFR.hubCenter.x) / 2;
+    const tyreContactDistance =
+      Math.abs(this.wheelRL.hubCenter.y + this.wheelRR.hubCenter.y) / 2 +
+      this.wheelRL.radius;
+    const W = this.mass * GRAVITY;
+    const normalForceR =
+      (fx_norm * tyreContactDistance + W * frontHubDistance) /
+      (rearHubDistance + frontHubDistance);
+    const normalForceF = W - normalForceR;
 
-    const a = totalForwardForce / this.mass;
-    this.state.acceleration = this.state.forward.clone().multiplyScalar(a);
+    const normalForceRL = normalForceR / 2;
+    const normalForceRR = normalForceR / 2;
+    const normalForceFL = normalForceF / 2;
+    const normalForceFR = normalForceF / 2;
+
+    // z axis (left-night)
+    const fz = this.state.right.clone().multiplyScalar(0);
+
+    // render force
+    this.wheelRL.updateForce(normalForceRL, drivingForceRL);
+    this.wheelRR.updateForce(normalForceRR, drivingForceRR);
+    this.wheelFL.updateForce(normalForceFL, 0);
+    this.wheelFR.updateForce(normalForceFR, 0);
+
+    return fx.clone().add(fz);
+  }
+
+  updateAcceleration(force: Force) {
+    this.state.acceleration = force.clone().multiplyScalar(1 / this.mass);
   }
 
   updateVelocity(dt: number) {
@@ -128,5 +168,10 @@ export class Vehicle {
 
   updatePosition(dt: number) {
     this.state.position.add(this.state.velocity.clone().multiplyScalar(dt));
+  }
+
+  printVelocity() {
+    const v = this.state.velocity.length();
+    console.log(`Velocity = ${((v * 18) / 5).toFixed(0)}`);
   }
 }

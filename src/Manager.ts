@@ -29,6 +29,7 @@ export class Manager {
   map: Layout;
   static instance: Manager;
   lastKeyPress: Set<string>;
+  vehicle: Vehicle;
 
   // Threejs
   ui: Ui;
@@ -62,9 +63,9 @@ export class Manager {
     // this.ui = new Ui(this);
     this.map = new Layout(this);
 
-    const vehicle = new Vehicle();
+    this.vehicle = new Vehicle();
     this.updatableObjects = [];
-    this.updatableObjects.push(vehicle);
+    this.updatableObjects.push(this.vehicle);
 
     this.render();
   }

@@ -4,23 +4,26 @@ import { Manager } from "../Manager";
 import { DEG2RAD } from "three/src/math/MathUtils";
 import { RENDER_SCALE } from "../Const";
 import { Torque } from "./Engine";
-
+import { WheelForceRenderObject } from "./WheelForceRenderObject";
 export class Wheel {
   radius: number; // m
   hubCenter: Vector3; // from center of mass
   steeringAngle: number;
-  isFrontAxle: boolean;
+  steerable: boolean;
+  drivable: boolean;
   mass: number; // kg
   rotationMass: number; // moment of inertia
 
   // render
   gameObject: Object3D;
+  wheelForceObject: WheelForceRenderObject;
 
-  constructor(hubCenter: Vector3, isFrontAxle = false) {
+  constructor(hubCenter: Vector3, steerable: boolean, drivable: boolean) {
     this.radius = 0.5;
     this.hubCenter = hubCenter;
-    this.steeringAngle = 0;
-    this.isFrontAxle = isFrontAxle;
+    this.steeringAngle = 20;
+    this.steerable = steerable;
+    this.drivable = drivable;
     this.mass = 7;
     this.rotationMass = Wheel.momentOfInertia(
       this.mass,
@@ -29,6 +32,8 @@ export class Wheel {
     );
 
     this.render();
+    this.wheelForceObject = new WheelForceRenderObject(this.radius);
+    this.wheelForceObject.setParent(this.gameObject);
   }
 
   render() {
@@ -38,8 +43,13 @@ export class Wheel {
       0.1 * RENDER_SCALE
     );
     const material = new THREE.MeshStandardMaterial();
-    material.color.setHex(this.isFrontAxle ? 0xff0055 : 0x5500ff);
-    this.gameObject = new THREE.Mesh(cylinder, material);
+    material.color.setHex(this.steerable ? 0xff0055 : 0x5500ff);
+    material.transparent = true;
+    material.opacity = 0.3;
+    const model = new THREE.Mesh(cylinder, material);
+    model.rotateX(90 * DEG2RAD);
+    this.gameObject = new THREE.Group();
+    this.gameObject.add(model);
     this.gameObject.position.copy(
       this.hubCenter.clone().multiplyScalar(RENDER_SCALE)
     );
@@ -49,6 +59,7 @@ export class Wheel {
   }
 
   setSteeringAngle(newAngle: number) {
+    if (!this.steerable) return;
     this.steeringAngle = newAngle;
     this.gameObject.setRotationFromQuaternion(
       this.getRotation(this.steeringAngle)
@@ -58,14 +69,16 @@ export class Wheel {
 
   getRotation(angle: number): THREE.Quaternion {
     const q = new THREE.Quaternion();
-    q.setFromEuler(
-      new THREE.Euler(90 * DEG2RAD, 0, -this.steeringAngle * DEG2RAD)
-    );
+    q.setFromEuler(new THREE.Euler(0, this.steeringAngle * DEG2RAD, 0));
     return q;
   }
 
   getDrivingForceMagnitude(torque: Torque): number {
     return torque / this.radius;
+  }
+
+  updateForce(normalForce: number, drivingForce: number) {
+    this.wheelForceObject.updateForce(normalForce, drivingForce);
   }
 
   static momentOfInertia(mass: number, r1: number, r2: number) {

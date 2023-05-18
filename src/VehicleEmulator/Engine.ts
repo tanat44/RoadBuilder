@@ -4,6 +4,7 @@ import { Manager } from "../Manager";
 import { DEG2RAD } from "three/src/math/MathUtils";
 
 export type Torque = number;
+export type GearRatio = number;
 
 export class EngineDataPoint {
   rpm: number;
@@ -22,12 +23,23 @@ export class Engine {
   rpm: number;
   torque: Torque;
   accelerationRate: number; // rpm per second of accel
+  finalDriveRatio: number;
+  gearRatios: GearRatio[];
+  currentGear: number;
 
   constructor(torquePowerProfile: EngineDataPoint[]) {
     this.torquePowerProfile = torquePowerProfile;
     this.rpm = this.torquePowerProfile[0].rpm;
     this.torque = 0;
     this.accelerationRate = 200;
+    this.finalDriveRatio = 4.1; // brz
+    this.gearRatios = [3.62, 2.18, 1.54, 1.21, 1.0, 0.76];
+    this.currentGear = 0;
+  }
+
+  revMatch(wheelAngularVelocity: number) {
+    const engineRpm = wheelAngularVelocity * this.finalDriveRatio;
+    this.setRpm(engineRpm);
   }
 
   accelerate(dt: number) {
@@ -37,6 +49,10 @@ export class Engine {
       this.torquePowerProfile[this.torquePowerProfile.length - 1].rpm;
     if (this.rpm > maxRpm) this.rpm = maxRpm;
     this.setRpm(this.rpm);
+  }
+
+  coast() {
+    this.setRpm(0);
   }
 
   setRpm(rpm: Torque) {
@@ -64,7 +80,7 @@ export class Engine {
         (upperData.rpm - lowerData.rpm)) *
         (rpm - lowerData.rpm);
 
-    return torque;
+    return torque * this.finalDriveRatio * this.gearRatios[this.currentGear];
   }
 
   static brzEngine() {
