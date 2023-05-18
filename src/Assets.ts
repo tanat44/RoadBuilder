@@ -58,11 +58,11 @@ export class Assets {
     manager.objects.push(this.plane);
     manager.scene.add(this.plane);
 
-    const helper = new THREE.GridHelper(2000, 100);
-    helper.position.y = 0;
-    (helper.material as any).opacity = 0.25;
-    (helper.material as any).transparent = true;
-    manager.scene.add(helper);
+    const grid = new THREE.GridHelper(2000, 100);
+    grid.position.y = 0;
+    (grid.material as any).opacity = 0.25;
+    (grid.material as any).transparent = true;
+    manager.scene.add(grid);
 
     this.edgeMaterial = new THREE.MeshBasicMaterial({
       color: 0xa3a3a3,

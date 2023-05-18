@@ -1,4 +1,4 @@
-import { Matrix4, Object3D, Vector3 } from "three";
+import { Line3, Matrix4, Object3D, Vector3 } from "three";
 
 export class VehicleState {
   position: Vector3;
@@ -8,9 +8,9 @@ export class VehicleState {
   right: Vector3;
   up: Vector3;
 
-  constructor() {
-    this.position = new Vector3(0, 0, 0);
-    this.velocity = new Vector3(10, 0, 0);
+  constructor(initialPosition: Vector3) {
+    this.position = new Vector3().copy(initialPosition);
+    this.velocity = new Vector3(0, 0, 0);
     this.acceleration = new Vector3(0, 0, 0);
     this.forward = new Vector3(1, 0, 0);
     this.right = new Vector3(0, 0, 1);
@@ -19,7 +19,7 @@ export class VehicleState {
 
   updateDirection(worldDirection: Matrix4) {
     worldDirection.extractBasis(this.forward, this.up, this.right);
-    console.log(this.forward, this.right);
+    // console.log(this.forward, this.right);
   }
 
   copyState(state: VehicleState) {
@@ -29,5 +29,9 @@ export class VehicleState {
     this.forward.copy(state.forward);
     this.right.copy(state.right);
     this.up.copy(state.up);
+  }
+
+  getPerpendicularLine(): Line3 {
+    return new Line3(this.position, this.position.clone().add(this.right));
   }
 }

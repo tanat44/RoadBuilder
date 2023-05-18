@@ -54,9 +54,9 @@ export class Manager {
 
     this.toolState = new ToolState();
     this.pathEngine = new PathEngine();
-    this.mouseHandler = new MouseHandler(this);
+    // this.mouseHandler = new MouseHandler(this);
     this.assets = new Assets(this);
-    this.ui = new Ui(this);
+    // this.ui = new Ui(this);
     this.map = new Layout(this);
 
     const vehicle = new Vehicle();

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@types/three": "^0.149.0",
+    "chart.js": "^4.3.0",
     "html-webpack-plugin": "^5.5.0",
     "lodash": "^4.17.21",
     "three": "^0.150.1"
