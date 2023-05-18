@@ -105,6 +105,8 @@ export class Vehicle {
 
     // Update Position
     this.updatePosition(dt);
+
+    // render
     this.gameObject.position.copy(
       this.state.position.clone().multiplyScalar(RENDER_SCALE)
     );
@@ -148,14 +150,22 @@ export class Vehicle {
     const normalForceFR = normalForceF / 2;
 
     // z axis (left-night)
-    // const cornerForceFL =
-    const fz = this.state.right.clone().multiplyScalar(0);
+    let contactForceFL = new Vector3(0, 0, 0);
+    let contactForceFR = new Vector3(0, 0, 0);
+    if (this.state.velocity.length() > 0) {
+      contactForceFL = this.steeringAxle.getContactForce(normalForceFL);
+      contactForceFR = this.steeringAxle.getContactForce(normalForceFR);
+    }
+    const right = this.state.right.clone();
+    const fz = right
+      .clone()
+      .multiplyScalar(contactForceFL.clone().add(contactForceFR).dot(right));
 
     // render force
-    this.wheelRL.updateForce(normalForceRL, drivingForceRL);
-    this.wheelRR.updateForce(normalForceRR, drivingForceRR);
+    this.wheelRL.wheelForceObject.updateForce(normalForceRL, drivingForceRL);
+    this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
     this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
-
+    this.steeringAxle.updateContactForce(contactForceFL, contactForceFR);
     return fx.clone().add(fz);
   }
 
@@ -169,6 +179,12 @@ export class Vehicle {
 
   updatePosition(dt: number) {
     this.state.position.add(this.state.velocity.clone().multiplyScalar(dt));
+
+    const dx = this.state.position.clone().sub(this.previousState.position);
+    const q = new THREE.Quaternion();
+    q.setFromUnitVectors(this.state.forward, dx);
+    this.gameObject.applyQuaternion(q);
+    this.state.updateDirection(this.gameObject.matrixWorld);
   }
 
   printVelocity() {

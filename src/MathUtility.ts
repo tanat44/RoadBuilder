@@ -8,6 +8,12 @@ export type ClosestPoint = {
   distanceOnB: number;
 };
 
+export type BasisVector = {
+  forward: Vector3;
+  right: Vector3;
+  up: Vector3;
+};
+
 export class MathUtility {
   static findClosestPoint(a0: Vector3, a: Vector3, b0: Vector3, b: Vector3) {
     // Implement from algorithm in this link
@@ -58,5 +64,17 @@ export class MathUtility {
         (inputValue - lowerData[inputFieldName]);
 
     return outputValue;
+  }
+
+  static getBasisVector(gameObject: THREE.Object3D): BasisVector {
+    const x = new Vector3();
+    const y = new Vector3();
+    const z = new Vector3();
+    gameObject.matrixWorld.extractBasis(x, y, z);
+    return {
+      forward: x,
+      up: y,
+      right: z,
+    };
   }
 }

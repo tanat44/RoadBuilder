@@ -77,10 +77,6 @@ export class Wheel {
     return torque / this.radius;
   }
 
-  updateForce(normalForce: number, drivingForce: number) {
-    this.wheelForceObject.updateForce(normalForce, drivingForce);
-  }
-
   static momentOfInertia(mass: number, r1: number, r2: number) {
     return mass * (r1 * r1 + r2 * r2);
   }

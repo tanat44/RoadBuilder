@@ -1,5 +1,7 @@
-import { Object3D, Group } from "three";
+import { Object3D, Group, Vector3 } from "three";
 import {
+  CONTACT_FORCE_COEFFICIENT,
+  CONTACT_FORCE_RENDER_SCALE,
   FORCE_RENDER_SCALE,
   NORMAL_FORCE_RENDER_SCALE,
   RENDER_SCALE,
@@ -14,6 +16,7 @@ export class WheelForceRenderObject {
   normalForceObject: Group;
   drivingForceModel: THREE.Mesh;
   drivingForceObject: Group;
+  contactForceObject: Group; // tire contact force from slip angle
 
   engineForceMaterial: THREE.MeshStandardMaterial;
   brakingForceMaterial: THREE.MeshStandardMaterial;
@@ -42,10 +45,19 @@ export class WheelForceRenderObject {
     this.drivingForceObject = new Group();
     this.drivingForceObject.add(this.drivingForceModel);
 
+    // contact
+    const contactForceMaterial = new THREE.MeshStandardMaterial();
+    contactForceMaterial.color.setHex(0x1400ad);
+    const contactForceModel = new THREE.Mesh(box, contactForceMaterial);
+    contactForceModel.position.copy(new THREE.Vector3(0, 0, size / 2));
+    this.contactForceObject = new Group();
+    this.contactForceObject.add(contactForceModel);
+
     // all forces
     this.allForceObject = new Group();
     this.allForceObject.add(this.normalForceObject);
     this.allForceObject.add(this.drivingForceObject);
+    this.allForceObject.add(this.contactForceObject);
     this.allForceObject.position.copy(
       new THREE.Vector3(0, (wheelRadius + Y_OFFSET) * RENDER_SCALE, 0)
     );
@@ -67,5 +79,13 @@ export class WheelForceRenderObject {
       this.drivingForceModel.material = this.brakingForceMaterial;
     else this.drivingForceModel.material = this.engineForceMaterial;
     this.drivingForceObject.scale.set(drivingForce * FORCE_RENDER_SCALE, 1, 1);
+  }
+
+  updateContactForce(contactForce: number) {
+    this.contactForceObject.scale.set(
+      1,
+      1,
+      (contactForce / CONTACT_FORCE_COEFFICIENT) * CONTACT_FORCE_RENDER_SCALE
+    );
   }
 }

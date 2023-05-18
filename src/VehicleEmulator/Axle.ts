@@ -1,6 +1,8 @@
 import { Group, Object3D, Vector3 } from "three";
 import { Wheel } from "./Wheel";
-import { STEERING_SPEED } from "../Const";
+import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
+import { TireModel } from "./TireModel";
+import { MathUtility } from "../MathUtility";
 
 export class Axle {
   axleCenter: Vector3;
@@ -25,19 +27,21 @@ export class Axle {
   }
 
   updateNormalForce(normalForceL: number, normalForceR: number) {
-    this.leftWheel.updateForce(normalForceL, 0);
-    this.rightWheel.updateForce(normalForceR, 0);
+    this.leftWheel.wheelForceObject.updateForce(normalForceL, 0);
+    this.rightWheel.wheelForceObject.updateForce(normalForceR, 0);
   }
 }
 
 export class SteeringAxle extends Axle {
   steeringAngle: number;
   maxSteeringAngle: number; // degree
+  tireModel: TireModel;
 
   constructor(axleCenter: Vector3, width: number) {
     super(axleCenter, width);
     this.steeringAngle = 0;
     this.maxSteeringAngle = 40;
+    this.tireModel = new TireModel();
   }
 
   steer(dt: number, direction: number) {
@@ -52,5 +56,31 @@ export class SteeringAxle extends Axle {
 
     this.leftWheel.steer(this.steeringAngle);
     this.rightWheel.steer(this.steeringAngle);
+  }
+
+  getContactForce(normalForce: number): Vector3 {
+    const direction = this.getDirection();
+    const contactForce =
+      direction *
+      this.tireModel.getForce(Math.abs(this.steeringAngle)) *
+      normalForce *
+      CONTACT_FORCE_COEFFICIENT;
+
+    const { right } = MathUtility.getBasisVector(this.leftWheel.gameObject);
+    return right.multiplyScalar(contactForce);
+  }
+
+  getDirection(): number {
+    return this.steeringAngle > 0 ? -1 : 1;
+  }
+
+  updateContactForce(contactForceL: Vector3, contactForceR: Vector3) {
+    const direction = this.getDirection();
+    this.leftWheel.wheelForceObject.updateContactForce(
+      direction * contactForceL.length()
+    );
+    this.rightWheel.wheelForceObject.updateContactForce(
+      direction * contactForceR.length()
+    );
   }
 }
