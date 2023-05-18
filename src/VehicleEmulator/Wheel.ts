@@ -21,7 +21,7 @@ export class Wheel {
   constructor(hubCenter: Vector3, steerable: boolean, drivable: boolean) {
     this.radius = 0.5;
     this.hubCenter = hubCenter;
-    this.steeringAngle = 20;
+    this.steeringAngle = 0;
     this.steerable = steerable;
     this.drivable = drivable;
     this.mass = 7;
@@ -45,7 +45,7 @@ export class Wheel {
     const material = new THREE.MeshStandardMaterial();
     material.color.setHex(this.steerable ? 0xff0055 : 0x5500ff);
     material.transparent = true;
-    material.opacity = 0.3;
+    material.opacity = 0.9;
     const model = new THREE.Mesh(cylinder, material);
     model.rotateX(90 * DEG2RAD);
     this.gameObject = new THREE.Group();
@@ -53,12 +53,12 @@ export class Wheel {
     this.gameObject.position.copy(
       this.hubCenter.clone().multiplyScalar(RENDER_SCALE)
     );
-    this.setSteeringAngle(this.steeringAngle);
+    this.steer(this.steeringAngle);
 
     Manager.instance.addGameObjectToScene(this.gameObject);
   }
 
-  setSteeringAngle(newAngle: number) {
+  steer(newAngle: number) {
     if (!this.steerable) return;
     this.steeringAngle = newAngle;
     this.gameObject.setRotationFromQuaternion(

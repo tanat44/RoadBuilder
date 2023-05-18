@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
 import { DEG2RAD } from "three/src/math/MathUtils";
+import { MathUtility } from "../MathUtility";
 
 export type Torque = number;
 export type GearRatio = number;
@@ -61,26 +62,16 @@ export class Engine {
   }
 
   getTorque(rpm: number): Torque {
-    let upperIdx: number;
-    for (upperIdx = 1; upperIdx < this.torquePowerProfile.length; upperIdx++) {
-      if (rpm > this.torquePowerProfile[upperIdx].rpm) continue;
-      else break;
-    }
+    const engineTorque = MathUtility.linearInterpolation(
+      this.torquePowerProfile,
+      "rpm",
+      "torque",
+      rpm
+    );
 
-    if (upperIdx == this.torquePowerProfile.length)
-      return this.torquePowerProfile[this.torquePowerProfile.length - 1].torque;
-
-    const lowerIdx = upperIdx - 1;
-    const upperData = this.torquePowerProfile[upperIdx];
-    const lowerData = this.torquePowerProfile[lowerIdx];
-
-    const torque =
-      lowerData.torque +
-      ((upperData.torque - lowerData.torque) /
-        (upperData.rpm - lowerData.rpm)) *
-        (rpm - lowerData.rpm);
-
-    return torque * this.finalDriveRatio * this.gearRatios[this.currentGear];
+    return (
+      engineTorque * this.finalDriveRatio * this.gearRatios[this.currentGear]
+    );
   }
 
   static brzEngine() {

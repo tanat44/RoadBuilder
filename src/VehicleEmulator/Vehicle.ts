@@ -1,12 +1,11 @@
 import { Object3D, Vector3 } from "three";
 import * as THREE from "three";
 import { Manager } from "../Manager";
-import { DEG2RAD } from "three/src/math/MathUtils";
 import { VehicleState } from "./VehicleState";
 import { Wheel } from "./Wheel";
 import { Engine, Torque } from "./Engine";
 import { GRAVITY, RENDER_SCALE } from "../Const";
-import { VectorUtility } from "../VectorUtility";
+import { SteeringAxle } from "./Axle";
 
 // ALL METRIC UNIT
 
@@ -20,8 +19,7 @@ export class Vehicle {
 
   // car property
   engine: Engine;
-  wheelFL: Wheel;
-  wheelFR: Wheel;
+  steeringAxle: SteeringAxle;
   wheelRL: Wheel;
   wheelRR: Wheel;
 
@@ -37,8 +35,7 @@ export class Vehicle {
 
     // car
     this.engine = Engine.brzEngine();
-    this.wheelFL = new Wheel(new Vector3(1.2, 0, -0.9), true, false);
-    this.wheelFR = new Wheel(new Vector3(1.2, 0, 0.9), true, false);
+    this.steeringAxle = new SteeringAxle(new Vector3(1.2, 0, 0), 1.8);
     this.wheelRL = new Wheel(new Vector3(-1.2, 0, -0.9), false, true);
     this.wheelRR = new Wheel(new Vector3(-1.2, 0, 0.9), false, true);
 
@@ -50,11 +47,9 @@ export class Vehicle {
   }
 
   drawVehicle() {
-    const width = new Vector3(0, 0, 1).dot(
-      this.wheelFL.hubCenter.clone().sub(this.wheelFR.hubCenter)
-    );
+    const width = this.steeringAxle.width;
     const length = new Vector3(1, 0, 0).dot(
-      this.wheelFL.hubCenter.clone().sub(this.wheelRL.hubCenter)
+      this.steeringAxle.leftWheel.hubCenter.clone().sub(this.wheelRL.hubCenter)
     );
     const box = new THREE.BoxGeometry(
       length * RENDER_SCALE,
@@ -69,11 +64,9 @@ export class Vehicle {
     this.gameObject.position.copy(
       this.centerOfMass.clone().multiplyScalar(RENDER_SCALE)
     );
-    Manager.instance.addGameObjectToScene(this.gameObject);
 
     // wheels
-    this.gameObject.add(this.wheelFL.gameObject);
-    this.gameObject.add(this.wheelFR.gameObject);
+    this.gameObject.add(this.steeringAxle.gameObject);
     this.gameObject.add(this.wheelRL.gameObject);
     this.gameObject.add(this.wheelRR.gameObject);
 
@@ -81,6 +74,8 @@ export class Vehicle {
     var axesHelper = new THREE.AxesHelper(400);
     Manager.instance.addGameObjectToScene(axesHelper);
     this.gameObject.add(axesHelper);
+
+    Manager.instance.addGameObjectToScene(this.gameObject);
   }
 
   tick(dt: number, lastKeyPress: Set<string>) {
@@ -89,9 +84,15 @@ export class Vehicle {
     this.previousState.copyState(this.state);
 
     // Update Force
+
+    // driving
     if (lastKeyPress.has("w")) this.engine.accelerate(dt);
-    else this.engine.coast();
-    this.engine.printState();
+    else if (lastKeyPress.has("s")) {
+    } else this.engine.coast();
+
+    // steering
+    if (lastKeyPress.has("a")) this.steeringAxle.steer(dt, 1);
+    else if (lastKeyPress.has("d")) this.steeringAxle.steer(dt, -1);
 
     const force = this.calculateForce();
 
@@ -109,7 +110,8 @@ export class Vehicle {
     );
 
     // print
-    this.printVelocity();
+    // this.engine.printState();
+    // this.printVelocity();
   }
 
   calculateNormalForce() {}
@@ -130,8 +132,7 @@ export class Vehicle {
     // y axis (normal)
     const rearHubDistance =
       Math.abs(this.wheelRL.hubCenter.x + this.wheelRR.hubCenter.x) / 2;
-    const frontHubDistance =
-      Math.abs(this.wheelFL.hubCenter.x + this.wheelFR.hubCenter.x) / 2;
+    const frontHubDistance = this.steeringAxle.axleCenter.x;
     const tyreContactDistance =
       Math.abs(this.wheelRL.hubCenter.y + this.wheelRR.hubCenter.y) / 2 +
       this.wheelRL.radius;
@@ -147,13 +148,13 @@ export class Vehicle {
     const normalForceFR = normalForceF / 2;
 
     // z axis (left-night)
+    // const cornerForceFL =
     const fz = this.state.right.clone().multiplyScalar(0);
 
     // render force
     this.wheelRL.updateForce(normalForceRL, drivingForceRL);
     this.wheelRR.updateForce(normalForceRR, drivingForceRR);
-    this.wheelFL.updateForce(normalForceFL, 0);
-    this.wheelFR.updateForce(normalForceFR, 0);
+    this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
 
     return fx.clone().add(fz);
   }

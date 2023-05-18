@@ -8,7 +8,7 @@ export type ClosestPoint = {
   distanceOnB: number;
 };
 
-export class VectorUtility {
+export class MathUtility {
   static findClosestPoint(a0: Vector3, a: Vector3, b0: Vector3, b: Vector3) {
     // Implement from algorithm in this link
     // https://math.stackexchange.com/questions/1993953/closest-points-between-two-lines
@@ -30,5 +30,33 @@ export class VectorUtility {
       distanceOnB: T.y,
     };
     return output;
+  }
+
+  static linearInterpolation(
+    dataPoints: any[],
+    inputFieldName: string,
+    outputFieldName: string,
+    inputValue: number
+  ) {
+    let upperIdx: number;
+    for (upperIdx = 1; upperIdx < dataPoints.length; upperIdx++) {
+      if (inputValue > dataPoints[upperIdx][inputFieldName]) continue;
+      else break;
+    }
+
+    if (upperIdx == dataPoints.length)
+      return dataPoints[dataPoints.length - 1][inputFieldName];
+
+    const lowerIdx = upperIdx - 1;
+    const upperData = dataPoints[upperIdx];
+    const lowerData = dataPoints[lowerIdx];
+
+    const outputValue =
+      lowerData[outputFieldName] +
+      ((upperData[outputFieldName] - lowerData[outputFieldName]) /
+        (upperData[inputFieldName] - lowerData[inputFieldName])) *
+        (inputValue - lowerData[inputFieldName]);
+
+    return outputValue;
   }
 }

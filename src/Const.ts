@@ -5,3 +5,5 @@ export const RENDER_SCALE = 100;
 export const FORCE_RENDER_SCALE = 0.02;
 export const NORMAL_FORCE_RENDER_SCALE = 0.01;
 export const GRAVITY = 9.8;
+export const CORNER_FORCE_COEFFICIENT = 1.0;
+export const STEERING_SPEED = 50.0;
