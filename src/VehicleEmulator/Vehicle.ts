@@ -6,8 +6,6 @@ import { Wheel } from "./Wheel";
 import { Engine, Torque } from "./Engine";
 import { CONTACT_FORCE_COEFFICIENT, GRAVITY, RENDER_SCALE } from "../Const";
 import { SteeringAxle } from "./Axle";
-import * as MatrixSolver from "../Math/MatrixSolver";
-import { round } from "mathjs";
 
 // ALL METRIC UNIT
 
@@ -82,21 +80,18 @@ export class Vehicle {
 
   tick(dt: number, lastKeyPress: Set<string>) {
     if (!this.engine) return;
-
     this.previousState.copyState(this.state);
 
-    // Update Force
-
-    // driving
+    // Keyboard - accel / brake
     if (lastKeyPress.has("w")) this.engine.accelerate(dt);
     else if (lastKeyPress.has("s")) {
     } else this.engine.coast();
 
-    // steering
+    // Keyboard - steering
     if (lastKeyPress.has("a")) this.steeringAxle.steer(dt, 1);
     else if (lastKeyPress.has("d")) this.steeringAxle.steer(dt, -1);
 
-    // const force = this.calculateForce();
+    // Calculate force
     const force = this.calculateForce3();
 
     // Update Acc
@@ -212,159 +207,6 @@ export class Vehicle {
     this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
     this.wheelRR.wheelForceObject.updateContactForce(contactForceRR);
 
-    return fx.clone().add(fz);
-  }
-
-  calculateForce2(): Force {
-    const torqueSplitRatio = 0.5; // torque RR / torqueRL
-    const torqueRL = this.engine.torque * (1 - torqueSplitRatio);
-    const torqueRR = this.engine.torque * torqueSplitRatio;
-    const drivingForceRL = this.wheelRL.getDrivingForceMagnitude(torqueRL);
-    const drivingForceRR = this.wheelRR.getDrivingForceMagnitude(torqueRR);
-
-    let contactForceCoeff = new Vector3(0, 0, 0);
-    if (this.state.velocity.length() > 0 || this.engine.torque > 0)
-      contactForceCoeff = this.steeringAxle.getContactForce(1);
-    const contactForceCoeffX = this.state.forward
-      .clone()
-      .dot(contactForceCoeff);
-    const contactForceCoeffZ = this.state.right.clone().dot(contactForceCoeff);
-
-    const rearAxleDistance = Math.abs(
-      new Vector3(1, 0, 0).dot(this.wheelRL.hubCenter)
-    );
-    const frontAxleDistance = Math.abs(
-      new Vector3(1, 0, 0).dot(this.steeringAxle.axleCenter)
-    );
-    const rearAxleHeight = Math.abs(
-      new Vector3(0, 1, 0).dot(this.wheelRL.hubCenter)
-    );
-    const length = frontAxleDistance + rearAxleDistance;
-    const width = this.steeringAxle.width;
-    const weight = this.mass * GRAVITY;
-    const az = 0; // calculate centrifugal acceleration here
-
-    // A X = B
-    // X = [ normalForceFL, normalForceFR, normalForce RL, normalForceRR, contactForceR, ax ]
-    const A = [
-      [1, 1, 1, 1, 0, 0],
-      [contactForceCoeffX, contactForceCoeffX, 0, 0, 0, -this.mass],
-      [contactForceCoeffZ, contactForceCoeffZ, 0, 0, 1, 0],
-      [1, 1, -1, -1, 0, 0],
-      [1, -1, 1, -1, 0, 0],
-      [
-        (width / 2) * contactForceCoeffX +
-          frontAxleDistance * contactForceCoeffZ,
-        frontAxleDistance * contactForceCoeffZ -
-          (width / 2) * contactForceCoeffX,
-        0,
-        0,
-        -rearAxleDistance,
-        0,
-      ],
-    ];
-    const B = [
-      weight,
-      -drivingForceRL - drivingForceRR,
-      this.mass * az,
-      0,
-      0,
-      (width / 2) * drivingForceRL - (width / 2) * drivingForceRR,
-    ];
-
-    let X = [0, 0, 0, 0, 0, 0];
-
-    try {
-      X = MatrixSolver.solve(A, B);
-    } catch (e) {
-      console.log("unsolvable", A, B);
-    }
-
-    // post calculation
-    const [
-      normalForceFL,
-      normalForceFR,
-      normalForceRL,
-      normalForceRR,
-      contactForceR,
-      ax,
-    ] = X;
-    const contactForceFL = contactForceCoeff
-      .clone()
-      .multiplyScalar(normalForceFL);
-    const contactForceFR = contactForceCoeff
-      .clone()
-      .multiplyScalar(normalForceFR);
-    const normalForceR = normalForceRL + normalForceRR;
-    const contactForceRL = (contactForceR * normalForceRL) / normalForceR;
-    const contactForceRR = contactForceR - contactForceRL;
-
-    // render force
-    this.wheelRL.wheelForceObject.updateForce(normalForceRL, drivingForceRL);
-    this.wheelRL.wheelForceObject.updateContactForce(contactForceRL);
-    this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
-    this.wheelRR.wheelForceObject.updateContactForce(contactForceRR);
-    this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
-    this.steeringAxle.updateContactForce(contactForceFL, contactForceFR);
-
-    const fx = this.state.forward.clone().multiplyScalar(this.mass * ax);
-    const fz = this.state.forward.clone().multiplyScalar(this.mass * az);
-
-    console.log(X);
-
-    return fx.clone().add(fz);
-
-    return new Vector3(0, 0, 0);
-  }
-
-  calculateForce(): Force {
-    // x axis (front-back)
-    const torqueSplitRatio = 0.5; // torque RR / torqueRL
-    const torqueRL = this.engine.torque * (1 - torqueSplitRatio);
-    const torqueRR = this.engine.torque * torqueSplitRatio;
-
-    const drivingForceRL = this.wheelRL.getDrivingForceMagnitude(torqueRL);
-    const drivingForceRR = this.wheelRR.getDrivingForceMagnitude(torqueRR);
-    const engineForce = drivingForceRL + drivingForceRR;
-    const dragForce = 0;
-    const fx_norm = engineForce + dragForce;
-    const fx = this.state.forward.clone().multiplyScalar(fx_norm);
-
-    // y axis (normal)
-    const rearHubDistance =
-      Math.abs(this.wheelRL.hubCenter.x + this.wheelRR.hubCenter.x) / 2;
-    const frontHubDistance = this.steeringAxle.axleCenter.x;
-    const tyreContactDistance =
-      Math.abs(this.wheelRL.hubCenter.y + this.wheelRR.hubCenter.y) / 2 +
-      this.wheelRL.radius;
-    const W = this.mass * GRAVITY;
-    const normalForceR =
-      (fx_norm * tyreContactDistance + W * frontHubDistance) /
-      (rearHubDistance + frontHubDistance);
-    const normalForceF = W - normalForceR;
-
-    const normalForceRL = normalForceR / 2;
-    const normalForceRR = normalForceR / 2;
-    const normalForceFL = normalForceF / 2;
-    const normalForceFR = normalForceF / 2;
-
-    // z axis (left-night)
-    let contactForceFL = new Vector3(0, 0, 0);
-    let contactForceFR = new Vector3(0, 0, 0);
-    if (this.state.velocity.length() > 0) {
-      contactForceFL = this.steeringAxle.getContactForce(normalForceFL);
-      contactForceFR = this.steeringAxle.getContactForce(normalForceFR);
-    }
-    const right = this.state.right.clone();
-    const fz = right
-      .clone()
-      .multiplyScalar(contactForceFL.clone().add(contactForceFR).dot(right));
-
-    // render force
-    this.wheelRL.wheelForceObject.updateForce(normalForceRL, drivingForceRL);
-    this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
-    this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
-    this.steeringAxle.updateContactForce(contactForceFL, contactForceFR);
     return fx.clone().add(fz);
   }
 
