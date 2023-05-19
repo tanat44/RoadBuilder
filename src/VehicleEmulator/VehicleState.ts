@@ -36,4 +36,27 @@ export class VehicleState {
   getPerpendicularLine(): Line3 {
     return new Line3(this.position, this.position.clone().add(this.right));
   }
+
+  printState() {
+    // velocity
+    const v = this.velocity.length();
+    let text = `v ${VehicleState.velocityToKmh(v).toFixed(2)}, `;
+
+    // acceleration
+    const ax = this.forward.clone().dot(this.acceleration);
+    const ac = this.right.clone().dot(this.acceleration);
+    text += `ax ${VehicleState.accelerationToKmh2(ax).toFixed(
+      2
+    )}, ac ${VehicleState.accelerationToKmh2(ac).toFixed(2)}`;
+
+    console.log(text);
+  }
+
+  static velocityToKmh(velocityMs: number) {
+    return (velocityMs * 18) / 5;
+  }
+
+  static accelerationToKmh2(accelMs2: number) {
+    return (accelMs2 * 18) / 5 / 5;
+  }
 }

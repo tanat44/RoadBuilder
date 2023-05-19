@@ -99,7 +99,7 @@ export class Manager {
       1,
       10000
     );
-    this.camera.position.set(0, 250, 1000);
+    this.camera.position.set(0, 3000, 2000);
     this.scene.add(this.camera);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true });

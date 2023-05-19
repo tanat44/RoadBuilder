@@ -16,6 +16,7 @@ export class Vehicle {
   state: VehicleState;
   centerOfMass: Vector3;
   mass: number;
+  friction: number;
 
   // car property
   engine: Engine;
@@ -31,7 +32,8 @@ export class Vehicle {
     this.centerOfMass = new Vector3(0, 0.5, 0);
     this.state = new VehicleState(this.centerOfMass);
     this.previousState = new VehicleState(this.centerOfMass);
-    this.mass = 1246; // 1200kg
+    this.mass = 1246; // brz weight
+    this.friction = 500; // newton
 
     // car
     this.engine = Engine.brzEngine();
@@ -99,7 +101,6 @@ export class Vehicle {
 
     // Update Velocity
     this.updateVelocity(dt);
-    // console.log(this.state.velocity);
 
     // Update Position
     this.updatePosition(dt);
@@ -111,7 +112,7 @@ export class Vehicle {
 
     // print
     // this.engine.printState();
-    // this.printVelocity();
+    this.state.printState();
   }
 
   calculateForce3(): Force {
@@ -171,24 +172,14 @@ export class Vehicle {
 
     // centrifugal force
     const v_abs = this.state.velocity.length();
-    const ac = (v_abs * v_abs) / this.state.corneringRadius;
-    let fc_abs = this.mass * ac;
+
     const fz_front_abs = this.state.right
       .clone()
       .dot(contactForceFL.clone().add(contactForceFR));
     let fz_rear = 0;
-    let fz = new Vector3(0, 0, 0);
+    let fz = this.state.right.clone().multiplyScalar(fz_front_abs);
 
-    if (Math.abs(fc_abs) > Math.abs(fz_front_abs)) {
-      // rear wheel help provide cornering force
-      fz_rear = fc_abs - fz_front_abs;
-      fz = this.state.right.clone().multiplyScalar(fc_abs);
-      console.log("a");
-    } else {
-      // only front wheel provide cornering force
-      fz_rear = 0;
-      fz = this.state.right.clone().multiplyScalar(fz_front_abs);
-    }
+    this.state.corneringRadius = (v_abs * v_abs) / fz.length();
 
     // RearAxle
     const normalForceRL =
@@ -207,6 +198,9 @@ export class Vehicle {
     this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
     this.wheelRR.wheelForceObject.updateContactForce(contactForceRR);
 
+    // friction
+    fx.add(this.state.forward.clone().multiplyScalar(-this.friction));
+
     return fx.clone().add(fz);
   }
 
@@ -215,7 +209,33 @@ export class Vehicle {
   }
 
   updateVelocity(dt: number) {
-    this.state.velocity.add(this.state.acceleration.clone().multiplyScalar(dt));
+    // linear
+    const dv_abs = this.state.acceleration.dot(this.state.forward) * dt;
+    const v_abs = this.state.velocity.length() + dv_abs;
+    if (v_abs < 0) {
+      this.state.velocity.set(0, 0, 0);
+      return;
+    }
+
+    // rotate
+    const dz_abs = this.state.acceleration.dot(this.state.right) * dt;
+    const dz = this.state.right.clone().multiplyScalar(dz_abs);
+    const v = this.state.velocity
+      .clone()
+      .add(dz)
+      .normalize()
+      .multiplyScalar(v_abs);
+    if (v.length() < 0.001) {
+      const dv = this.state.acceleration.clone().multiplyScalar(dt);
+      v.copy(dv);
+    }
+
+    // if (v2.dot(this.state.forward) < 0) {
+    //   this.state.velocity.set(0, 0, 0);
+    //   return;
+    // }
+
+    this.state.velocity.copy(v);
   }
 
   updatePosition(dt: number) {
@@ -226,10 +246,5 @@ export class Vehicle {
     q.setFromUnitVectors(this.state.forward, dx);
     this.gameObject.applyQuaternion(q);
     this.state.updateDirection(this.gameObject.matrixWorld);
-  }
-
-  printVelocity() {
-    const v = this.state.velocity.length();
-    console.log(`Velocity = ${((v * 18) / 5).toFixed(0)}`);
   }
 }
