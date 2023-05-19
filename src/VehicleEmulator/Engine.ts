@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { Object3D, Vector3 } from "three";
 import { Manager } from "../Manager";
 import { DEG2RAD } from "three/src/math/MathUtils";
-import { MathUtility } from "../MathUtility";
+import { MathUtility } from "../Math/MathUtility";
 
 export type Torque = number;
 export type GearRatio = number;

@@ -7,6 +7,7 @@ export class VehicleState {
   forward: Vector3;
   right: Vector3;
   up: Vector3;
+  corneringRadius: number;
 
   constructor(initialPosition: Vector3) {
     this.position = new Vector3().copy(initialPosition);
@@ -15,6 +16,7 @@ export class VehicleState {
     this.forward = new Vector3(1, 0, 0);
     this.right = new Vector3(0, 0, 1);
     this.up = new Vector3(0, 1, 0);
+    this.corneringRadius = Infinity;
   }
 
   updateDirection(worldDirection: Matrix4) {

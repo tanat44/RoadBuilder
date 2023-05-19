@@ -1,4 +1,4 @@
-import { MathUtility } from "../MathUtility";
+import { MathUtility } from "../Math/MathUtility";
 
 class SlipAngleData {
   angle: number;

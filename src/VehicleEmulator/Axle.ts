@@ -2,7 +2,7 @@ import { Group, Object3D, Vector3 } from "three";
 import { Wheel } from "./Wheel";
 import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
 import { TireModel } from "./TireModel";
-import { MathUtility } from "../MathUtility";
+import { MathUtility } from "../Math/MathUtility";
 
 export class Axle {
   axleCenter: Vector3;
