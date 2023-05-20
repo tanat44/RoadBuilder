@@ -4,9 +4,13 @@ export enum Vendors {
     Unknown = '0000'
 }
 
-export enum Products {
+export enum MicrosoftProducts {
     XboxOneXController = "0b13",
     Unknown = '0000'
+}
+
+export enum FanatecProducts {
+    PodiumWheelBaseDD1 = "0006",
 }
 
 export enum ControllerType {
@@ -19,6 +23,6 @@ export enum ControllerType {
 export type ControllerInfo = {
     id: string,
     vendor: Vendors,
-    product: Products
+    product?: string
     type: ControllerType
 }
