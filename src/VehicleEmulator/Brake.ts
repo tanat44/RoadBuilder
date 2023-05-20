@@ -5,8 +5,8 @@ export class Brake {
 
   constructor() {
     this.pedalForce = 0;
-    this.maxBrakingForce = 1000;
-    this.brakingEffect = 0.1;
+    this.maxBrakingForce = 4000;
+    this.brakingEffect = 2;
   }
 
   tick(dt: number, lastKeyPress: Set<string>) {
@@ -18,5 +18,9 @@ export class Brake {
     let f = this.pedalForce + dt * this.brakingEffect;
     if (f > 1) f = 1;
     this.pedalForce = f;
+  }
+
+  getBrakingForce(): number {
+    return this.pedalForce * this.maxBrakingForce;
   }
 }

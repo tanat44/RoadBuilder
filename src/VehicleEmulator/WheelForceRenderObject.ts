@@ -39,7 +39,9 @@ export class WheelForceRenderObject {
 
     // driving
     this.engineForceMaterial = new THREE.MeshStandardMaterial();
-    this.engineForceMaterial.color.setHex(0x99ff00);
+    this.engineForceMaterial.color.setHex(0x22ff00);
+    this.brakingForceMaterial = new THREE.MeshStandardMaterial();
+    this.brakingForceMaterial.color.setHex(0xff2211);
     this.drivingForceModel = new THREE.Mesh(box, this.engineForceMaterial);
     this.drivingForceModel.position.copy(new THREE.Vector3(size / 2, 0, 0));
     this.drivingForceObject = new Group();

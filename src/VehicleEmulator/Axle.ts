@@ -4,6 +4,10 @@ import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
 import { TireModel } from "./TireModel";
 import { MathUtility } from "../Math/MathUtility";
 
+export type AxleBrakingForce = {
+  leftWheel: Vector3;
+  rightWheel: Vector3;
+};
 export class Axle {
   axleCenter: Vector3;
   width: number;
@@ -49,6 +53,13 @@ export class Axle {
   tick(dt: number, lastKeyPress: Set<string>) {
     this.leftWheel.tick(dt, lastKeyPress);
     this.rightWheel.tick(dt, lastKeyPress);
+  }
+
+  getBrakingForce(): AxleBrakingForce {
+    return {
+      leftWheel: this.leftWheel.getBrakingForce(),
+      rightWheel: this.rightWheel.getBrakingForce(),
+    };
   }
 }
 
