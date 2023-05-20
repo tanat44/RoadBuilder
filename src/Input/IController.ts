@@ -1,4 +1,6 @@
-export interface IControls {
+import {IDisposable} from "../types";
+
+export interface IController extends IDisposable {
     readonly currentInputs: Map<InputType, Input>
 }
 

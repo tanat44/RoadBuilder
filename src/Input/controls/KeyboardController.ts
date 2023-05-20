@@ -1,15 +1,17 @@
-import {IControls, Input, InputType} from "./IControls";
+import {IController, Input, InputType} from "../IController";
 
-export class KeyboardControls implements IControls {
+export class KeyboardController implements IController {
 
     private inputs: Map<InputType, Input> = new Map();
+    private readonly onKeyUp: (e: KeyboardEvent) => void;
+    private readonly onKeyDown: (e: KeyboardEvent) => void;
 
     get currentInputs(): Map<InputType, Input> {
         return this.inputs;
     }
 
     constructor() {
-        document.onkeydown = (e: KeyboardEvent) => {
+        this.onKeyDown = (e: KeyboardEvent) => {
             if (e.key === "w" || e.key === "ArrowUp") {
                 this.inputs.set(InputType.Up, {value: 1, name: InputType.Up});
             }
@@ -25,9 +27,9 @@ export class KeyboardControls implements IControls {
             if (e.key === "d" || e.key === "ArrowRight") {
                 this.inputs.set(InputType.Right, {value: 1, name: InputType.Right});
             }
-        };
+        }
 
-        document.onkeyup = (e: KeyboardEvent) => {
+        this.onKeyUp = (e: KeyboardEvent) => {
             if (e.key === "w" || e.key === "ArrowUp") {
                 this.inputs.delete(InputType.Up);
             }
@@ -43,6 +45,14 @@ export class KeyboardControls implements IControls {
             if (e.key === "d" || e.key === "ArrowRight") {
                 this.inputs.delete(InputType.Right);
             }
-        };
+        }
+
+        window.addEventListener('keyup', this.onKeyUp);
+        window.addEventListener('keydown', this.onKeyDown);
+    }
+
+    dispose() {
+        window.removeEventListener('keyup', this.onKeyUp);
+        window.removeEventListener('keydown', this.onKeyDown);
     }
 }

@@ -6,7 +6,7 @@ import {Wheel} from "./Wheel";
 import {Engine} from "./Engine";
 import {GRAVITY, RENDER_SCALE} from "../Const";
 import {SteeringAxle} from "./Axle";
-import {Input, InputType} from "../Controls/IControls";
+import {Input, InputType} from "../Input/IController";
 
 // ALL METRIC UNIT
 

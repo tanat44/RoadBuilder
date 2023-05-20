@@ -18,8 +18,10 @@ import { Ui } from "./Ui";
 import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
 import { Vehicle } from "./VehicleEmulator/Vehicle";
-import {IControls} from "./Controls/IControls";
-import {KeyboardControls} from "./Controls/KeyboardControls";
+import {IController} from "./Input/IController";
+import {KeyboardController} from "./Input/controls/KeyboardController";
+import {GamePadController} from "./Input/controls/GamePadController";
+import {ControlsManager} from "./Input";
 
 export class Manager {
   // Data classes
@@ -45,7 +47,7 @@ export class Manager {
   clock: THREE.Clock;
   updatableObjects: any[];
 
-  private controls: IControls;
+  private controls: ControlsManager;
 
   constructor() {
     Manager.instance = this;
@@ -59,8 +61,10 @@ export class Manager {
 
     this.toolState = new ToolState();
     this.pathEngine = new PathEngine();
-    // this.mouseHandler = new MouseHandler(this);
-    this.controls = new KeyboardControls();
+
+    // "Kontroler gier zgodny z HID (STANDARD GAMEPAD Vendor: 045e Product: 0b13)"
+    // Keyboard
+    this.controls = new ControlsManager("Kontroler gier zgodny z HID (STANDARD GAMEPAD Vendor: 045e Product: 0b13)")
     this.assets = new Assets(this);
     // this.ui = new Ui(this);
     this.map = new Layout(this);
