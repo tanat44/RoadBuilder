@@ -86,8 +86,8 @@ export class Vehicle {
     this.engine.tick(dt, inputs);
 
     // Keyboard - steering
-    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value);
-    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value);
+    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value * -1);
+    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value * -1);
 
     // Calculate force
     const force = this.calculateForce3();
