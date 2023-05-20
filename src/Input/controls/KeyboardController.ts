@@ -17,11 +17,11 @@ export class KeyboardController implements IController {
             }
 
             if (e.key === "s" || e.key === "ArrowDown") {
-                this.inputs.set(InputType.Down, {value: 1, name: InputType.Down});
+                this.inputs.set(InputType.Down, {value: -1, name: InputType.Down});
             }
 
             if (e.key === "a" || e.key === "ArrowLeft") {
-                this.inputs.set(InputType.Left, {value: 1, name: InputType.Left});
+                this.inputs.set(InputType.Left, {value: -1, name: InputType.Left});
             }
 
             if (e.key === "d" || e.key === "ArrowRight") {
