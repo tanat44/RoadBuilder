@@ -1,7 +1,7 @@
-import { IController, Input, InputType } from "./IController";
-import { GamePadController } from "./controls/GamePadController";
-import { KeyboardController } from "./controls/KeyboardController";
-import { ControllerInfo, ControllerType, Products, Vendors } from "./types";
+import {IController, Input, InputType} from "./IController";
+import {GamePadController} from "./controls/GamePadController";
+import {KeyboardController} from "./controls/KeyboardController";
+import {ControllerInfo, ControllerType, FanatecProducts, MicrosoftProducts, Vendors} from "./types";
 
 
 export class ControlsManager {
@@ -60,29 +60,33 @@ export class ControlsManager {
     }
 
     private parseControllerId(id: string): ControllerInfo {
-        const vendorResults = id.match(/(STANDARD GAMEPAD) (Vendor: [a-z0-9]+) (Product: [a-z0-9]+)/i)
+        id = id.toLowerCase()
+        const vendorId = id.match(/vendor: [a-z0-1]+/i)?.at(0).split(":").at(1).trim();
+        const productId = id.match(/product: [a-z0-1]+/i)?.at(0).split(":").at(1).trim();
+        const vendor = Object.values(Vendors).includes(vendorId as any) ? vendorId as Vendors : Vendors.Unknown;
+        let product: string = null
+        let type =ControllerType.Unknown
 
-        if (!vendorResults) {
-            return {
-                id,
-                type: ControllerType.Unknown,
-                product: Products.Unknown,
-                vendor: Vendors.Unknown
+        if (vendor === Vendors.Microsoft) {
+            product = Object.values(MicrosoftProducts).includes(productId as any) ? productId as MicrosoftProducts : null;
+            type = product === MicrosoftProducts.XboxOneXController ? ControllerType.GamePad : type
+        }
+        else if (vendor === Vendors.Fanatec) {
+            product = Object.values(FanatecProducts).includes(productId as any) ? productId as FanatecProducts : null;
+            type = product === FanatecProducts.PodiumWheelBaseDD1 ? ControllerType.Wheel : type
+        } else {
+            if (id.includes("standard gamepad") || id.includes("xbox 360 controller")) {
+                type = ControllerType.GamePad
+            } else if (id.includes("wheel")) {
+                type = ControllerType.Wheel
             }
         }
-
-
-        const productId = vendorResults.at(3) && vendorResults.at(3).split(":").at(1).trim();
-        const vendorId = vendorResults.at(2) && vendorResults.at(2).split(":").at(1).trim();
-        const product = Object.values(Products).includes(productId as any) ? productId as Products : Products.Unknown;
-        const vendor = Object.values(Vendors).includes(vendorId as any) ? vendorId as Vendors : Vendors.Unknown;
-        const gamepad = !!vendorResults[1] || product === Products.XboxOneXController
 
         return {
             id,
             product,
             vendor,
-            type: gamepad ? ControllerType.GamePad : ControllerType.Unknown
+            type
         }
     }
 }

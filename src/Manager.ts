@@ -60,8 +60,10 @@ export class Manager {
     this.pathEngine = new PathEngine();
 
     // "Kontroler gier zgodny z HID (STANDARD GAMEPAD Vendor: 045e Product: 0b13)"
-    // Keyboard
-    this.controls = new ControlsManager("Kontroler gier zgodny z HID (STANDARD GAMEPAD Vendor: 045e Product: 0b13)")
+    // "Xbox 360 Controller (XInput STANDARD GAMEPAD)"
+    // "FANATEC Podium Wheel Base DD1 (Vendor: 0eb7 Product: 0006)"
+    // "Keyboard"
+    this.controls = new ControlsManager("Xbox 360 Controller (XInput STANDARD GAMEPAD)")
     this.assets = new Assets(this);
     // this.ui = new Ui(this);
     this.map = new Layout(this);
