@@ -1,7 +1,7 @@
-import {IController, Input, InputType} from "./IController";
-import {GamePadController} from "./controls/GamePadController";
-import {KeyboardController} from "./controls/KeyboardController";
-import {ControllerInfo, ControllerType, Products, Vendors} from "./consts";
+import { IController, Input, InputType } from "./IController";
+import { GamePadController } from "./controls/GamePadController";
+import { KeyboardController } from "./controls/KeyboardController";
+import { ControllerInfo, ControllerType, Products, Vendors } from "./types";
 
 
 export class ControlsManager {

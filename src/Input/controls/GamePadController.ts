@@ -1,4 +1,4 @@
-import {IController, Input, InputType} from "../IController";
+import { IController, Input, InputType } from "../IController";
 
 const STICK_DEAD_ZONE = 0.1;
 

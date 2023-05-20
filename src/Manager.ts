@@ -18,10 +18,7 @@ import { Ui } from "./Ui";
 import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
 import { Vehicle } from "./VehicleEmulator/Vehicle";
-import {IController} from "./Input/IController";
-import {KeyboardController} from "./Input/controls/KeyboardController";
-import {GamePadController} from "./Input/controls/GamePadController";
-import {ControlsManager} from "./Input";
+import { ControlsManager } from "./Input";
 
 export class Manager {
   // Data classes

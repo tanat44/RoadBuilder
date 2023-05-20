@@ -1,4 +1,4 @@
-import {IController, Input, InputType} from "../IController";
+import { IController, Input, InputType } from "../IController";
 
 export class KeyboardController implements IController {
 
