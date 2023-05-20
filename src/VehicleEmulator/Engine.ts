@@ -74,6 +74,11 @@ export class Engine {
     );
   }
 
+  tick(dt: number, lastKeyPress: Set<string>) {
+    if (lastKeyPress.has("w")) this.accelerate(dt);
+    else this.coast();
+  }
+
   static brzEngine() {
     const torquePowerProfile: EngineDataPoint[] = [
       new EngineDataPoint(0, 0, 0),

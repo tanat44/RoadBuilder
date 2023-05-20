@@ -5,6 +5,7 @@ import { DEG2RAD } from "three/src/math/MathUtils";
 import { RENDER_SCALE } from "../Const";
 import { Torque } from "./Engine";
 import { WheelForceRenderObject } from "./WheelForceRenderObject";
+import { Brake } from "./Brake";
 export class Wheel {
   radius: number; // m
   hubCenter: Vector3; // from center of mass
@@ -13,6 +14,7 @@ export class Wheel {
   drivable: boolean;
   mass: number; // kg
   rotationMass: number; // moment of inertia
+  brake: Brake;
 
   // render
   gameObject: Object3D;
@@ -30,7 +32,9 @@ export class Wheel {
       this.radius,
       this.radius - 0.1 // wheel thickness is 0.1 m
     );
+    this.brake = new Brake();
 
+    // rendering
     this.render();
     this.wheelForceObject = new WheelForceRenderObject(this.radius);
     this.wheelForceObject.setParent(this.gameObject);
@@ -79,5 +83,9 @@ export class Wheel {
 
   static momentOfInertia(mass: number, r1: number, r2: number) {
     return mass * (r1 * r1 + r2 * r2);
+  }
+
+  tick(dt: number, lastKeyPress: Set<string>) {
+    this.brake.tick(dt, lastKeyPress);
   }
 }
