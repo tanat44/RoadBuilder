@@ -75,14 +75,18 @@ export class SteeringAxle extends Axle {
   }
 
   steer(dt: number, direction: number) {
-    const deltaAngle = dt * STEERING_SPEED * direction;
-    if (this.steeringAngle + deltaAngle > this.maxSteeringAngle) {
-      this.steeringAngle = this.maxSteeringAngle;
-    } else if (this.steeringAngle + deltaAngle < -this.maxSteeringAngle) {
-      this.steeringAngle = -this.maxSteeringAngle;
-    } else {
-      this.steeringAngle += deltaAngle;
-    }
+    // const deltaAngle = dt * STEERING_SPEED * direction;
+
+    this.steeringAngle = this.maxSteeringAngle * direction;
+
+
+    // if (this.steeringAngle + deltaAngle > this.maxSteeringAngle) {
+    //   this.steeringAngle = this.maxSteeringAngle;
+    // } else if (this.steeringAngle + deltaAngle < -this.maxSteeringAngle) {
+    //   this.steeringAngle = -this.maxSteeringAngle;
+    // } else {
+    //   this.steeringAngle += deltaAngle;
+    // }
 
     this.leftWheel.steer(this.steeringAngle);
     this.rightWheel.steer(this.steeringAngle);

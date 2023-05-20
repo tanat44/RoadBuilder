@@ -63,7 +63,7 @@ export class Manager {
     // "Xbox 360 Controller (XInput STANDARD GAMEPAD)"
     // "FANATEC Podium Wheel Base DD1 (Vendor: 0eb7 Product: 0006)"
     // "Keyboard"
-    this.controls = new ControlsManager("Xbox 360 Controller (XInput STANDARD GAMEPAD)")
+    this.controls = new ControlsManager("FANATEC Podium Wheel Base DD1 (Vendor: 0eb7 Product: 0006)")
     this.assets = new Assets(this);
     // this.ui = new Ui(this);
     this.map = new Layout(this);

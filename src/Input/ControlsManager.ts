@@ -2,6 +2,7 @@ import {IController, Input, InputType} from "./IController";
 import {GamePadController} from "./controls/GamePadController";
 import {KeyboardController} from "./controls/KeyboardController";
 import {ControllerInfo, ControllerType, FanatecProducts, MicrosoftProducts, Vendors} from "./types";
+import {WheelController} from "./controls/WheelController";
 
 
 export class ControlsManager {
@@ -55,14 +56,14 @@ export class ControlsManager {
         }
 
         if (controllerInfo.type === ControllerType.Wheel) {
-            // TODO add support for wheels
+            return new WheelController(id)
         }
     }
 
     private parseControllerId(id: string): ControllerInfo {
         id = id.toLowerCase()
-        const vendorId = id.match(/vendor: [a-z0-1]+/i)?.at(0).split(":").at(1).trim();
-        const productId = id.match(/product: [a-z0-1]+/i)?.at(0).split(":").at(1).trim();
+        const vendorId = id.match(/vendor: [a-z0-9]+/i)?.at(0).split(":").at(1).trim();
+        const productId = id.match(/product: [a-z0-9]+/i)?.at(0).split(":").at(1).trim();
         const vendor = Object.values(Vendors).includes(vendorId as any) ? vendorId as Vendors : Vendors.Unknown;
         let product: string = null
         let type =ControllerType.Unknown
