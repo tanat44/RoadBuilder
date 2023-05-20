@@ -3,6 +3,7 @@ import { Wheel } from "./Wheel";
 import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
 import { TireModel } from "./TireModel";
 import { MathUtility } from "../Math/MathUtility";
+import {Input, InputType} from "../Input";
 
 export class Axle {
   axleCenter: Vector3;
@@ -46,9 +47,9 @@ export class Axle {
     this.rightWheel.wheelForceObject.updateDrivingForce(drivingForceL);
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
-    this.leftWheel.tick(dt, lastKeyPress);
-    this.rightWheel.tick(dt, lastKeyPress);
+  tick(dt: number, inputs: Map<InputType, Input>) {
+    this.leftWheel.tick(dt, inputs);
+    this.rightWheel.tick(dt, inputs);
   }
 }
 

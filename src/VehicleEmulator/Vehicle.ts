@@ -81,18 +81,13 @@ export class Vehicle {
   tick(dt: number, inputs: Map<InputType, Input>) {
     if (!this.engine) return;
     this.previousState.copyState(this.state);
-    this.steeringAxle.tick(dt, lastKeyPress);
-    this.drivingAxle.tick(dt, lastKeyPress);
-    this.engine.tick(dt, lastKeyPress);
+    this.steeringAxle.tick(dt, inputs);
+    this.drivingAxle.tick(dt, inputs);
+    this.engine.tick(dt, inputs);
 
-    // // Keyboard - accel / brake
-    // if (inputs.has(InputType.Up)) this.engine.accelerate(dt);
-    // else if (inputs.has(InputType.Down)) {
-    // } else this.engine.coast();
-    //
-    // // Keyboard - steering
-    // if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, 1);
-    // else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, -1);
+    // Keyboard - steering
+    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value);
+    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value);
 
     // Calculate force
     const force = this.calculateForce3();

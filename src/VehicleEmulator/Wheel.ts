@@ -6,6 +6,7 @@ import { RENDER_SCALE } from "../Const";
 import { Torque } from "./Engine";
 import { WheelForceRenderObject } from "./WheelForceRenderObject";
 import { Brake } from "./Brake";
+import {Input, InputType} from "../Input";
 export class Wheel {
   radius: number; // m
   hubCenter: Vector3; // from center of mass
@@ -85,7 +86,7 @@ export class Wheel {
     return mass * (r1 * r1 + r2 * r2);
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
-    this.brake.tick(dt, lastKeyPress);
+  tick(dt: number, inputs: Map<InputType, Input>) {
+    this.brake.tick(dt, inputs);
   }
 }
