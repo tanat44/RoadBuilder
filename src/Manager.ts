@@ -18,6 +18,8 @@ import { Ui } from "./Ui";
 import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
 import { Vehicle } from "./VehicleEmulator/Vehicle";
+import {IControls} from "./Controls/IControls";
+import {KeyboardControls} from "./Controls/KeyboardControls";
 
 export class Manager {
   // Data classes
@@ -28,7 +30,6 @@ export class Manager {
   objects: any[];
   map: Layout;
   static instance: Manager;
-  lastKeyPress: Set<string>;
   vehicle: Vehicle;
 
   // Threejs
@@ -44,10 +45,11 @@ export class Manager {
   clock: THREE.Clock;
   updatableObjects: any[];
 
+  private controls: IControls;
+
   constructor() {
     Manager.instance = this;
 
-    this.lastKeyPress = new Set();
     this.objects = [];
     this.raycaster = new THREE.Raycaster();
     this.setupScene();
@@ -58,7 +60,7 @@ export class Manager {
     this.toolState = new ToolState();
     this.pathEngine = new PathEngine();
     // this.mouseHandler = new MouseHandler(this);
-    this.setupKeyboardHandler();
+    this.controls = new KeyboardControls();
     this.assets = new Assets(this);
     // this.ui = new Ui(this);
     this.map = new Layout(this);
@@ -68,11 +70,6 @@ export class Manager {
     this.updatableObjects.push(this.vehicle);
 
     this.render();
-  }
-
-  setupKeyboardHandler() {
-    document.onkeydown = (e: KeyboardEvent) => this.lastKeyPress.add(e.key);
-    document.onkeyup = (e: KeyboardEvent) => this.lastKeyPress.delete(e.key);
   }
 
   setupLighting() {
@@ -117,7 +114,7 @@ export class Manager {
 
   tick() {
     const dt = Manager.instance.clock.getDelta();
-    this.updatableObjects.map((obj) => obj.tick(dt, this.lastKeyPress));
+    this.updatableObjects.map((obj) => obj.tick(dt, this.controls.currentInputs));
     this.render();
   }
 

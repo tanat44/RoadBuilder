@@ -1,11 +1,12 @@
-import { Object3D, Vector3 } from "three";
 import * as THREE from "three";
-import { Manager } from "../Manager";
-import { VehicleState } from "./VehicleState";
-import { Wheel } from "./Wheel";
-import { Engine, Torque } from "./Engine";
-import { CONTACT_FORCE_COEFFICIENT, GRAVITY, RENDER_SCALE } from "../Const";
-import { SteeringAxle } from "./Axle";
+import {Object3D, Vector3} from "three";
+import {Manager} from "../Manager";
+import {VehicleState} from "./VehicleState";
+import {Wheel} from "./Wheel";
+import {Engine} from "./Engine";
+import {GRAVITY, RENDER_SCALE} from "../Const";
+import {SteeringAxle} from "./Axle";
+import {Input, InputType} from "../Controls/IControls";
 
 // ALL METRIC UNIT
 
@@ -78,18 +79,18 @@ export class Vehicle {
     Manager.instance.addGameObjectToScene(this.gameObject);
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
+  tick(dt: number, inputs: Map<InputType, Input>) {
     if (!this.engine) return;
     this.previousState.copyState(this.state);
 
     // Keyboard - accel / brake
-    if (lastKeyPress.has("w")) this.engine.accelerate(dt);
-    else if (lastKeyPress.has("s")) {
+    if (inputs.has(InputType.Up)) this.engine.accelerate(dt);
+    else if (inputs.has(InputType.Down)) {
     } else this.engine.coast();
 
     // Keyboard - steering
-    if (lastKeyPress.has("a")) this.steeringAxle.steer(dt, 1);
-    else if (lastKeyPress.has("d")) this.steeringAxle.steer(dt, -1);
+    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, 1);
+    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, -1);
 
     // Calculate force
     const force = this.calculateForce3();
