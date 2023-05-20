@@ -1,3 +1,5 @@
+import {Input, InputType} from "../Input";
+
 export class Brake {
   pedalForce: number; // 0 to 1
   maxBrakingForce: number; // Newton
@@ -9,8 +11,8 @@ export class Brake {
     this.brakingEffect = 0.1;
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
-    if (!lastKeyPress.has("s")) {
+  tick(dt: number, inputs: Map<InputType, Input>) {
+    if (!inputs.has(InputType.Down)) {
       this.pedalForce = 0;
       return;
     }
