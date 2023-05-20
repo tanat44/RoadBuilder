@@ -2,10 +2,10 @@ import { Object3D, Vector3 } from "three";
 import * as THREE from "three";
 import { Manager } from "../Manager";
 import { VehicleState } from "./VehicleState";
-import { Wheel } from "./Wheel";
-import { Engine, Torque } from "./Engine";
-import { CONTACT_FORCE_COEFFICIENT, GRAVITY, RENDER_SCALE } from "../Const";
-import { SteeringAxle } from "./Axle";
+import { Engine } from "./Engine";
+import { GRAVITY, RENDER_SCALE } from "../Const";
+import { DrivingAxle, SteeringAxle } from "./Axle";
+import { DEG2RAD } from "three/src/math/MathUtils";
 
 // ALL METRIC UNIT
 
@@ -21,8 +21,7 @@ export class Vehicle {
   // car property
   engine: Engine;
   steeringAxle: SteeringAxle;
-  wheelRL: Wheel;
-  wheelRR: Wheel;
+  drivingAxle: DrivingAxle;
 
   // rendering
   gameObject: Object3D;
@@ -38,8 +37,7 @@ export class Vehicle {
     // car
     this.engine = Engine.brzEngine();
     this.steeringAxle = new SteeringAxle(new Vector3(1.2, 0, 0), 1.8);
-    this.wheelRL = new Wheel(new Vector3(-1.2, 0, -0.9), false, true);
-    this.wheelRR = new Wheel(new Vector3(-1.2, 0, 0.9), false, true);
+    this.drivingAxle = new DrivingAxle(new Vector3(-1.2, 0, 0), 1.8);
 
     this.drawGameObject();
   }
@@ -51,7 +49,7 @@ export class Vehicle {
   drawVehicle() {
     const width = this.steeringAxle.width;
     const length = new Vector3(1, 0, 0).dot(
-      this.steeringAxle.leftWheel.hubCenter.clone().sub(this.wheelRL.hubCenter)
+      this.steeringAxle.axleCenter.clone().sub(this.drivingAxle.axleCenter)
     );
     const box = new THREE.BoxGeometry(
       length * RENDER_SCALE,
@@ -69,8 +67,7 @@ export class Vehicle {
 
     // wheels
     this.gameObject.add(this.steeringAxle.gameObject);
-    this.gameObject.add(this.wheelRL.gameObject);
-    this.gameObject.add(this.wheelRR.gameObject);
+    this.gameObject.add(this.drivingAxle.gameObject);
 
     // axis helper
     var axesHelper = new THREE.AxesHelper(400);
@@ -83,11 +80,9 @@ export class Vehicle {
   tick(dt: number, lastKeyPress: Set<string>) {
     if (!this.engine) return;
     this.previousState.copyState(this.state);
-
-    // Keyboard - accel / brake
-    if (lastKeyPress.has("w")) this.engine.accelerate(dt);
-    else if (lastKeyPress.has("s")) {
-    } else this.engine.coast();
+    this.steeringAxle.tick(dt, lastKeyPress);
+    this.drivingAxle.tick(dt, lastKeyPress);
+    this.engine.tick(dt, lastKeyPress);
 
     // Keyboard - steering
     if (lastKeyPress.has("a")) this.steeringAxle.steer(dt, 1);
@@ -119,41 +114,39 @@ export class Vehicle {
     const torqueSplitRatio = 0.5; // torque RR / torqueRL
     const torqueRL = this.engine.torque * (1 - torqueSplitRatio);
     const torqueRR = this.engine.torque * torqueSplitRatio;
-    const drivingForceRL = this.wheelRL.getDrivingForceMagnitude(torqueRL);
-    const drivingForceRR = this.wheelRR.getDrivingForceMagnitude(torqueRR);
+    const drivingForceRL =
+      this.drivingAxle.leftWheel.getDrivingForceMagnitude(torqueRL);
+    const drivingForceRR =
+      this.drivingAxle.leftWheel.getDrivingForceMagnitude(torqueRR);
     const drivingForceR = drivingForceRL + drivingForceRL;
 
     let contactForceCoeff = new Vector3(0, 0, 0);
     if (this.state.velocity.length() > 0 || this.engine.torque > 0)
       contactForceCoeff = this.steeringAxle.getContactForce(1);
-    const contactForceCoeffX = this.state.forward
-      .clone()
-      .dot(contactForceCoeff);
-    const contactForceCoeffZ = this.state.right.clone().dot(contactForceCoeff);
 
     const rearAxleDistance = Math.abs(
-      new Vector3(1, 0, 0).dot(this.wheelRL.hubCenter)
+      new Vector3(1, 0, 0).dot(this.drivingAxle.axleCenter)
     );
     const frontAxleDistance = Math.abs(
       new Vector3(1, 0, 0).dot(this.steeringAxle.axleCenter)
     );
     const wheelHeight =
-      Math.abs(new Vector3(0, 1, 0).dot(this.wheelRL.hubCenter)) +
-      this.wheelRL.radius;
+      Math.abs(new Vector3(0, 1, 0).dot(this.drivingAxle.axleCenter)) +
+      this.drivingAxle.leftWheel.radius;
     const length = frontAxleDistance + rearAxleDistance;
     const width = this.steeringAxle.width;
     const halfWidth = width / 2;
     const weight = this.mass * GRAVITY;
 
-    // XZ plane
+    // axle weight distribution
     const normalForceF =
-      (rearAxleDistance * weight - drivingForceR * wheelHeight) /
-      (length + 2 * contactForceCoeffX * wheelHeight);
+      (rearAxleDistance * weight - drivingForceR * wheelHeight) / length;
     const normalForceR = weight - normalForceF;
 
-    // FrontAxle
+    // front axle - normal
     const c_1 =
-      (halfWidth - contactForceCoeffZ) / (halfWidth + contactForceCoeffZ);
+      (halfWidth - contactForceCoeff.length()) /
+      (halfWidth + contactForceCoeff.length());
     const normalForceFR = (normalForceF * c_1) / (1 + c_1);
     const normalForceFL = normalForceF - normalForceFR;
     let contactForceFL = new Vector3(0, 0, 0);
@@ -170,38 +163,48 @@ export class Vehicle {
         .dot(contactForceFL.clone().add(contactForceFR));
     const fx = this.state.forward.clone().multiplyScalar(fx_abs);
 
-    // centrifugal force
-    const v_abs = this.state.velocity.length();
-
-    const fz_front_abs = this.state.right
-      .clone()
-      .dot(contactForceFL.clone().add(contactForceFR));
+    // rear axle - normal
     let fz_rear = 0;
-    let fz = this.state.right.clone().multiplyScalar(fz_front_abs);
-
-    this.state.corneringRadius = (v_abs * v_abs) / fz.length();
-
-    // RearAxle
     const normalForceRL =
       (normalForceR * halfWidth - fz_rear * wheelHeight) / width;
     const normalForceRR = normalForceR - normalForceRL;
     const contactForceRL = (normalForceRL / normalForceR) * fz_rear;
     const contactForceRR = fz_rear - contactForceRL;
 
+    // ackerman
+    const v_abs = this.state.velocity.length();
+    this.state.corneringRadius =
+      -length / Math.tan(this.steeringAxle.steeringAngle * DEG2RAD);
+    const fc_abs = (this.mass * (v_abs * v_abs)) / this.state.corneringRadius;
+
+    // front axle - centrifugal
+    const fz_front_pred_abs = this.state.right
+      .clone()
+      .dot(contactForceFL.clone().add(contactForceFR));
+    let fz_front = this.state.right.clone().multiplyScalar(fz_front_pred_abs);
+    if (Math.abs(fz_front_pred_abs) > Math.abs(fc_abs)) {
+      console.log("override", fc_abs, this.state.corneringRadius);
+      fz_front = this.state.right.clone().multiplyScalar(fc_abs);
+    }
+
+    // rear axle - centrifugal
+
     // render force front
     this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
-    this.steeringAxle.updateContactForce(contactForceFL, contactForceFR);
+    this.steeringAxle.updateContactForce(
+      contactForceFL.length(),
+      contactForceFR.length()
+    );
 
     // render force rear
-    this.wheelRL.wheelForceObject.updateForce(normalForceRL, drivingForceRL);
-    this.wheelRL.wheelForceObject.updateContactForce(contactForceRL);
-    this.wheelRR.wheelForceObject.updateForce(normalForceRR, drivingForceRR);
-    this.wheelRR.wheelForceObject.updateContactForce(contactForceRR);
+    this.drivingAxle.updateNormalForce(normalForceRL, normalForceRR);
+    this.drivingAxle.updateContactForce(contactForceRL, contactForceRR);
+    this.drivingAxle.updateDrivingForce(drivingForceRL, drivingForceRR);
 
     // friction
     fx.add(this.state.forward.clone().multiplyScalar(-this.friction));
 
-    return fx.clone().add(fz);
+    return fx.clone().add(fz_front);
   }
 
   updateAcceleration(force: Force) {

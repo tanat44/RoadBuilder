@@ -68,13 +68,15 @@ export class WheelForceRenderObject {
     this.allForceObject.parent = parent;
   }
 
-  updateForce(normalForce: number, drivingForce: number) {
+  updateNormalForce(normalForce: number) {
     this.normalForceObject.scale.set(
       1,
       normalForce * NORMAL_FORCE_RENDER_SCALE,
       1
     );
+  }
 
+  updateDrivingForce(drivingForce: number) {
     if (drivingForce < 0)
       this.drivingForceModel.material = this.brakingForceMaterial;
     else this.drivingForceModel.material = this.engineForceMaterial;

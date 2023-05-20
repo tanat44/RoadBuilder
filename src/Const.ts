@@ -7,4 +7,4 @@ export const NORMAL_FORCE_RENDER_SCALE = 0.01;
 export const GRAVITY = 9.8;
 export const CONTACT_FORCE_COEFFICIENT = 1;
 export const CONTACT_FORCE_RENDER_SCALE = 0.005;
-export const STEERING_SPEED = 20.0;
+export const STEERING_SPEED = 40.0;

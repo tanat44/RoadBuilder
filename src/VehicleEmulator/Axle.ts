@@ -12,14 +12,19 @@ export class Axle {
   rightWheel: Wheel;
   gameObject: Group;
 
-  constructor(axleCenter: Vector3, width: number) {
+  constructor(
+    axleCenter: Vector3,
+    width: number,
+    steerable: boolean,
+    drivable: boolean
+  ) {
     this.axleCenter = axleCenter;
     this.width = width;
 
     const leftHubCenter = axleCenter.clone().add(new Vector3(0, 0, -width / 2));
     const rightHubCenter = axleCenter.clone().add(new Vector3(0, 0, width / 2));
-    this.leftWheel = new Wheel(leftHubCenter, true, false);
-    this.rightWheel = new Wheel(rightHubCenter, true, false);
+    this.leftWheel = new Wheel(leftHubCenter, steerable, drivable);
+    this.rightWheel = new Wheel(rightHubCenter, steerable, drivable);
 
     this.gameObject = new Group();
     this.gameObject.add(this.leftWheel.gameObject);
@@ -27,18 +32,42 @@ export class Axle {
   }
 
   updateNormalForce(normalForceL: number, normalForceR: number) {
-    this.leftWheel.wheelForceObject.updateForce(normalForceL, 0);
-    this.rightWheel.wheelForceObject.updateForce(normalForceR, 0);
+    this.leftWheel.wheelForceObject.updateNormalForce(normalForceL);
+    this.rightWheel.wheelForceObject.updateNormalForce(normalForceR);
+  }
+
+  updateContactForce(contactForceL: number, contactForceR: number) {
+    this.leftWheel.wheelForceObject.updateContactForce(contactForceL);
+    this.rightWheel.wheelForceObject.updateContactForce(contactForceR);
+  }
+
+  updateDrivingForce(drivingForceL: number, drivingForceR: number) {
+    this.leftWheel.wheelForceObject.updateDrivingForce(drivingForceL);
+    this.rightWheel.wheelForceObject.updateDrivingForce(drivingForceL);
+  }
+
+  tick(dt: number, lastKeyPress: Set<string>) {
+    this.leftWheel.tick(dt, lastKeyPress);
+    this.rightWheel.tick(dt, lastKeyPress);
+  }
+}
+
+export class DrivingAxle extends Axle {
+  tireModel: TireModel;
+
+  constructor(axleCenter: Vector3, width: number) {
+    super(axleCenter, width, false, true);
+    this.tireModel = new TireModel();
   }
 }
 
 export class SteeringAxle extends Axle {
-  steeringAngle: number;
+  steeringAngle: number; // degree
   maxSteeringAngle: number; // degree
   tireModel: TireModel;
 
   constructor(axleCenter: Vector3, width: number) {
-    super(axleCenter, width);
+    super(axleCenter, width, true, false);
     this.steeringAngle = 0;
     this.maxSteeringAngle = 40;
     this.tireModel = new TireModel();
@@ -66,7 +95,7 @@ export class SteeringAxle extends Axle {
       normalForce *
       CONTACT_FORCE_COEFFICIENT;
 
-    const { right } = MathUtility.getBasisVector(this.leftWheel.gameObject);
+    const { right } = MathUtility.getBasisVector(this.gameObject);
     return right.multiplyScalar(contactForce);
   }
 
@@ -74,13 +103,11 @@ export class SteeringAxle extends Axle {
     return this.steeringAngle > 0 ? -1 : 1;
   }
 
-  updateContactForce(contactForceL: Vector3, contactForceR: Vector3) {
+  updateContactForce(contactForceL: number, contactForceR: number) {
     const direction = this.getDirection();
-    this.leftWheel.wheelForceObject.updateContactForce(
-      direction * contactForceL.length()
-    );
-    this.rightWheel.wheelForceObject.updateContactForce(
-      direction * contactForceR.length()
+    super.updateContactForce(
+      direction * contactForceL,
+      direction * contactForceR
     );
   }
 }
