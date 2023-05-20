@@ -6,6 +6,7 @@ import { Engine } from "./Engine";
 import { GRAVITY, RENDER_SCALE } from "../Const";
 import { AxleBrakingForce, DrivingAxle, SteeringAxle } from "./Axle";
 import { DEG2RAD } from "three/src/math/MathUtils";
+import {Input, InputType} from "../Input/IController";
 
 // ALL METRIC UNIT
 
@@ -77,16 +78,16 @@ export class Vehicle {
     Manager.instance.addGameObjectToScene(this.gameObject);
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
+  tick(dt: number, inputs: Map<InputType, Input>) {
     if (!this.engine) return;
     this.previousState.copyState(this.state);
-    this.steeringAxle.tick(dt, lastKeyPress);
-    this.drivingAxle.tick(dt, lastKeyPress);
-    this.engine.tick(dt, lastKeyPress);
+    this.steeringAxle.tick(dt, inputs);
+    this.drivingAxle.tick(dt, inputs);
+    this.engine.tick(dt, inputs);
 
     // Keyboard - steering
-    if (lastKeyPress.has("a")) this.steeringAxle.steer(dt, 1);
-    else if (lastKeyPress.has("d")) this.steeringAxle.steer(dt, -1);
+    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value * -1);
+    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value * -1);
 
     // Calculate force
     const force = this.calculateForce3();

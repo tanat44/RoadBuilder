@@ -1,8 +1,5 @@
-import * as THREE from "three";
-import { Object3D, Vector3 } from "three";
-import { Manager } from "../Manager";
-import { DEG2RAD } from "three/src/math/MathUtils";
-import { MathUtility } from "../Math/MathUtility";
+import {MathUtility} from "../Math/MathUtility";
+import {Input, InputType} from "../Input";
 
 export type Torque = number;
 export type GearRatio = number;
@@ -74,8 +71,8 @@ export class Engine {
     );
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
-    if (lastKeyPress.has("w")) this.accelerate(dt);
+  tick(dt: number, inputs: Map<InputType, Input>) {
+    if (inputs.has(InputType.Up)) this.accelerate(dt);
     else this.coast();
   }
 

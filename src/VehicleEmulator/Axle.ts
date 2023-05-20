@@ -3,6 +3,7 @@ import { Wheel } from "./Wheel";
 import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
 import { TireModel } from "./TireModel";
 import { MathUtility } from "../Math/MathUtility";
+import {Input, InputType} from "../Input";
 
 export type AxleBrakingForce = {
   leftWheel: Vector3;
@@ -50,9 +51,9 @@ export class Axle {
     this.rightWheel.wheelForceObject.updateDrivingForce(drivingForceL);
   }
 
-  tick(dt: number, lastKeyPress: Set<string>) {
-    this.leftWheel.tick(dt, lastKeyPress);
-    this.rightWheel.tick(dt, lastKeyPress);
+  tick(dt: number, inputs: Map<InputType, Input>) {
+    this.leftWheel.tick(dt, inputs);
+    this.rightWheel.tick(dt, inputs);
   }
 
   getBrakingForce(): AxleBrakingForce {
@@ -85,14 +86,18 @@ export class SteeringAxle extends Axle {
   }
 
   steer(dt: number, direction: number) {
-    const deltaAngle = dt * STEERING_SPEED * direction;
-    if (this.steeringAngle + deltaAngle > this.maxSteeringAngle) {
-      this.steeringAngle = this.maxSteeringAngle;
-    } else if (this.steeringAngle + deltaAngle < -this.maxSteeringAngle) {
-      this.steeringAngle = -this.maxSteeringAngle;
-    } else {
-      this.steeringAngle += deltaAngle;
-    }
+    // const deltaAngle = dt * STEERING_SPEED * direction;
+
+    this.steeringAngle = this.maxSteeringAngle * direction;
+
+
+    // if (this.steeringAngle + deltaAngle > this.maxSteeringAngle) {
+    //   this.steeringAngle = this.maxSteeringAngle;
+    // } else if (this.steeringAngle + deltaAngle < -this.maxSteeringAngle) {
+    //   this.steeringAngle = -this.maxSteeringAngle;
+    // } else {
+    //   this.steeringAngle += deltaAngle;
+    // }
 
     this.leftWheel.steer(this.steeringAngle);
     this.rightWheel.steer(this.steeringAngle);
