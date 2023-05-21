@@ -1,5 +1,5 @@
-import {MathUtility} from "../Math/MathUtility";
-import {Input, InputType} from "../Input";
+import { MathUtility } from "../Math/MathUtility";
+import { Input, InputType } from "../Input";
 
 export type Torque = number;
 export type GearRatio = number;
@@ -35,27 +35,12 @@ export class Engine {
     this.currentGear = 0;
   }
 
-  revMatch(wheelAngularVelocity: number) {
-    const engineRpm = wheelAngularVelocity * this.finalDriveRatio;
-    this.setRpm(engineRpm);
-  }
-
-  accelerate(dt: number) {
-    this.rpm += 1000 * dt;
-
+  accelerate(pedalValue: number) {
+    // pedalValue = 0 to 1
     const maxRpm =
       this.torquePowerProfile[this.torquePowerProfile.length - 1].rpm;
-    if (this.rpm > maxRpm) this.rpm = maxRpm;
-    this.setRpm(this.rpm);
-  }
-
-  coast() {
-    this.setRpm(0);
-  }
-
-  setRpm(rpm: Torque) {
-    this.rpm = rpm;
-    this.torque = this.getTorque(rpm);
+    this.rpm = pedalValue * maxRpm;
+    this.torque = this.getTorque(this.rpm);
   }
 
   getTorque(rpm: number): Torque {
@@ -72,8 +57,10 @@ export class Engine {
   }
 
   tick(dt: number, inputs: Map<InputType, Input>) {
-    if (inputs.has(InputType.Up)) this.accelerate(dt);
-    else this.coast();
+    if (inputs.has(InputType.Up)) {
+      const input = inputs.get(InputType.Up);
+      this.accelerate(input.value);
+    }
   }
 
   static brzEngine() {

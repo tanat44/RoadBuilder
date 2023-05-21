@@ -1,17 +1,18 @@
 import { IDisposable } from "../types";
 
 export interface IController extends IDisposable {
-    readonly currentInputs: Map<InputType, Input>
+  readonly currentInputs: Map<InputType, Input>;
+  interpolateInput?: (dt: number) => void;
 }
 
 export enum InputType {
-    Up = 0,
-    Down = 1,
-    Left = 2,
-    Right = 3,
+  Up = 0,
+  Down = 1,
+  Left = 2,
+  Right = 3,
 }
 
 export type Input = {
-    readonly name: InputType
-    readonly value: number
-}
+  readonly name: InputType;
+  readonly value: number;
+};

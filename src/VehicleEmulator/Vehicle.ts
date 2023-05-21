@@ -4,9 +4,11 @@ import { Manager } from "../Manager";
 import { VehicleState } from "./VehicleState";
 import { Engine } from "./Engine";
 import { GRAVITY, RENDER_SCALE } from "../Const";
-import { AxleBrakingForce, DrivingAxle, SteeringAxle } from "./Axle";
 import { DEG2RAD } from "three/src/math/MathUtils";
-import {Input, InputType} from "../Input/IController";
+import { Input, InputType } from "../Input/IController";
+import { DrivingAxle } from "./DrivingAxle";
+import { SteeringAxle } from "./SteeringAxle";
+import { Wheel } from "./Wheel";
 
 // ALL METRIC UNIT
 
@@ -27,6 +29,9 @@ export class Vehicle {
   // rendering
   gameObject: Object3D;
 
+  // debug
+  logMessage: string;
+
   constructor() {
     // physics
     this.centerOfMass = new Vector3(0, 0.5, 0);
@@ -41,6 +46,7 @@ export class Vehicle {
     this.drivingAxle = new DrivingAxle(new Vector3(-1.2, 0, 0), 1.8);
 
     this.drawGameObject();
+    this.logMessage = "";
   }
 
   drawGameObject() {
@@ -80,14 +86,12 @@ export class Vehicle {
 
   tick(dt: number, inputs: Map<InputType, Input>) {
     if (!this.engine) return;
+
+    this.logMessage = "";
     this.previousState.copyState(this.state);
     this.steeringAxle.tick(dt, inputs);
     this.drivingAxle.tick(dt, inputs);
     this.engine.tick(dt, inputs);
-
-    // Keyboard - steering
-    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value * -1);
-    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value * -1);
 
     // Calculate force
     const force = this.calculateForce3();
@@ -107,8 +111,7 @@ export class Vehicle {
     );
 
     // print
-    // this.engine.printState();
-    this.state.printState();
+    console.log(`${this.state.toString()} (${this.logMessage})`);
   }
 
   calculateForce3(): Force {
@@ -184,8 +187,11 @@ export class Vehicle {
       .dot(contactForceFL.clone().add(contactForceFR));
     let fz_front = this.state.right.clone().multiplyScalar(fz_front_pred_abs);
     if (Math.abs(fz_front_pred_abs) > Math.abs(fc_abs)) {
-      console.log("override", fc_abs, this.state.corneringRadius);
       fz_front = this.state.right.clone().multiplyScalar(fc_abs);
+      this.steeringAxle.renderSlipWheel(false, false);
+    } else {
+      this.logMessage += "Front sliping";
+      this.steeringAxle.renderSlipWheel(true, true);
     }
 
     // rear axle - centrifugal

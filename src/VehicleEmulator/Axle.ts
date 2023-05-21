@@ -1,9 +1,6 @@
-import { Group, Object3D, Vector3 } from "three";
+import { Group, Vector3 } from "three";
 import { Wheel } from "./Wheel";
-import { CONTACT_FORCE_COEFFICIENT, STEERING_SPEED } from "../Const";
-import { TireModel } from "./TireModel";
-import { MathUtility } from "../Math/MathUtility";
-import {Input, InputType} from "../Input";
+import { Input, InputType } from "../Input";
 
 export type AxleBrakingForce = {
   leftWheel: Vector3;
@@ -62,68 +59,9 @@ export class Axle {
       rightWheel: this.rightWheel.getBrakingForce(),
     };
   }
-}
 
-export class DrivingAxle extends Axle {
-  tireModel: TireModel;
-
-  constructor(axleCenter: Vector3, width: number) {
-    super(axleCenter, width, false, true);
-    this.tireModel = new TireModel();
-  }
-}
-
-export class SteeringAxle extends Axle {
-  steeringAngle: number; // degree
-  maxSteeringAngle: number; // degree
-  tireModel: TireModel;
-
-  constructor(axleCenter: Vector3, width: number) {
-    super(axleCenter, width, true, false);
-    this.steeringAngle = 0;
-    this.maxSteeringAngle = 40;
-    this.tireModel = new TireModel();
-  }
-
-  steer(dt: number, direction: number) {
-    // const deltaAngle = dt * STEERING_SPEED * direction;
-
-    this.steeringAngle = this.maxSteeringAngle * direction;
-
-
-    // if (this.steeringAngle + deltaAngle > this.maxSteeringAngle) {
-    //   this.steeringAngle = this.maxSteeringAngle;
-    // } else if (this.steeringAngle + deltaAngle < -this.maxSteeringAngle) {
-    //   this.steeringAngle = -this.maxSteeringAngle;
-    // } else {
-    //   this.steeringAngle += deltaAngle;
-    // }
-
-    this.leftWheel.steer(this.steeringAngle);
-    this.rightWheel.steer(this.steeringAngle);
-  }
-
-  getContactForce(normalForce: number): Vector3 {
-    const direction = this.getDirection();
-    const contactForce =
-      direction *
-      this.tireModel.getForce(Math.abs(this.steeringAngle)) *
-      normalForce *
-      CONTACT_FORCE_COEFFICIENT;
-
-    const { right } = MathUtility.getBasisVector(this.gameObject);
-    return right.multiplyScalar(contactForce);
-  }
-
-  getDirection(): number {
-    return this.steeringAngle > 0 ? -1 : 1;
-  }
-
-  updateContactForce(contactForceL: number, contactForceR: number) {
-    const direction = this.getDirection();
-    super.updateContactForce(
-      direction * contactForceL,
-      direction * contactForceR
-    );
+  renderSlipWheel(leftSlip: boolean, rightSlip: boolean) {
+    this.leftWheel.renderSlip(leftSlip);
+    this.rightWheel.renderSlip(rightSlip);
   }
 }

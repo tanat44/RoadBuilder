@@ -63,7 +63,7 @@ export class Manager {
     // "Xbox 360 Controller (XInput STANDARD GAMEPAD)"
     // "FANATEC Podium Wheel Base DD1 (Vendor: 0eb7 Product: 0006)"
     // "Keyboard"
-    this.controls = new ControlsManager("Keyboard")
+    this.controls = new ControlsManager("Keyboard");
     this.assets = new Assets(this);
     // this.ui = new Ui(this);
     this.map = new Layout(this);
@@ -117,7 +117,9 @@ export class Manager {
 
   tick() {
     const dt = Manager.instance.clock.getDelta();
-    this.updatableObjects.map((obj) => obj.tick(dt, this.controls.currentInputs));
+    this.controls.interpolateInput(dt);
+    const controlInput = this.controls.currentInputs;
+    this.updatableObjects.map((obj) => obj.tick(dt, controlInput));
     this.render();
   }
 
