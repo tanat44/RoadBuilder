@@ -4,13 +4,20 @@ export enum Vendors {
     Unknown = '0000'
 }
 
-export enum MicrosoftProducts {
+export enum MicrosoftProductId {
     XboxOneXController = "0b13",
-    Unknown = '0000'
 }
 
-export enum FanatecProducts {
+export const MicrosoftProductName = {
+    [MicrosoftProductId.XboxOneXController]: 'Microsoft Xbox One X Controller',
+}
+
+export enum FanatecProductId {
     PodiumWheelBaseDD1 = "0006",
+}
+
+export const FanatecProductName = {
+    [FanatecProductId.PodiumWheelBaseDD1]: 'Fanatec Podium Wheel Base DD1'
 }
 
 export enum ControllerType {
@@ -22,7 +29,8 @@ export enum ControllerType {
 
 export type ControllerInfo = {
     id: string,
-    vendor: Vendors,
-    product?: string
+    vendorId: Vendors,
+    productId?: string,
+    productName: string,
     type: ControllerType
 }

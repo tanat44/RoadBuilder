@@ -19,6 +19,7 @@ import { Layout, MapSaveData } from "./Layout/Layout";
 import { STORAGE_SAVE_KEY } from "./Const";
 import { Vehicle } from "./VehicleEmulator/Vehicle";
 import { ControlsManager } from "./Input";
+import { EventHub } from "./EventHub";
 
 export class Manager {
   // Data classes
@@ -45,6 +46,7 @@ export class Manager {
   updatableObjects: any[];
 
   private controls: ControlsManager;
+  private hub: EventHub;
 
   constructor() {
     Manager.instance = this;
@@ -59,13 +61,10 @@ export class Manager {
     this.toolState = new ToolState();
     this.pathEngine = new PathEngine();
 
-    // "Kontroler gier zgodny z HID (STANDARD GAMEPAD Vendor: 045e Product: 0b13)"
-    // "Xbox 360 Controller (XInput STANDARD GAMEPAD)"
-    // "FANATEC Podium Wheel Base DD1 (Vendor: 0eb7 Product: 0006)"
-    // "Keyboard"
-    this.controls = new ControlsManager("Keyboard")
+    this.hub = new EventHub();
+    this.ui = new Ui(this.hub);
+    this.controls = new ControlsManager(this.hub);
     this.assets = new Assets(this);
-    // this.ui = new Ui(this);
     this.map = new Layout(this);
 
     this.vehicle = new Vehicle();
