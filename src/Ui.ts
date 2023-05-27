@@ -1,21 +1,48 @@
 import { Manager } from "./Manager";
-import { GUI } from "dat.gui";
-import { PathEngine } from "./PathEngine";
-import { Tools, ToolState } from "./Tools/ToolState";
+import { GUI, GUIController } from "dat.gui";
+import { Tools } from "./Tools/ToolState";
+import { Event, EventHub, SystemEvent } from "./EventHub";
+import { IDisposable } from "./types";
 
-export class Ui {
+export class Ui implements IDisposable{
   manager: Manager;
   gui: GUI = new GUI();
   infoText: any;
   objectNameText: any;
 
-  constructor(manager: Manager) {
-    this.manager = manager;
-    this.buildInfoMenu();
-    this.buildToolbar();
-    this.buildDebugMenu();
+  private readonly hub: EventHub;
+  private settingsFolder: GUI;
+  private controllerController?: GUIController;
+
+  // Events
+  private readonly onSettingsControllersListUpdated: (event: SystemEvent) => void;
+
+  constructor(hub: EventHub) {
+    this.hub = hub;
+    this.buildSettings();
+    // this.buildInfoMenu();
+    // this.buildToolbar();
+    // this.buildDebugMenu();
     // this.buildExampleMenu();
     // buildCurveMenu(params, splines, updateSplineOutline);
+
+    this.onSettingsControllersListUpdated = (event: SystemEvent) => {
+      this.controllerController?.remove()
+      const values = event.value.reduce((acc: any, item: any) => ({ ...acc, [item.productName]: item.id }), {})
+      this.controllerController = this.settingsFolder
+          .add({ Controller: event.value[0].id }, 'Controller', values )
+          .onChange((value) => this.hub.emit(Event.SettingsCurrentControllerChanged, new SystemEvent(value)))
+    }
+
+    this.hub.on(Event.SettingsControllersListUpdated, this.onSettingsControllersListUpdated);
+  }
+
+  dispose() {
+    this.hub.off(Event.SettingsControllersListUpdated)
+  }
+
+  buildSettings() {
+    this.settingsFolder = this.gui.addFolder("Settings");
   }
 
   buildCurveMenu(params: any, splines: any, updateSplineOutline: any) {
