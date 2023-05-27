@@ -116,7 +116,9 @@ export class Manager {
 
   tick() {
     const dt = Manager.instance.clock.getDelta();
-    this.updatableObjects.map((obj) => obj.tick(dt, this.controls.currentInputs));
+    this.controls.interpolateInput(dt);
+    const controlInput = this.controls.currentInputs;
+    this.updatableObjects.map((obj) => obj.tick(dt, controlInput));
     this.render();
   }
 

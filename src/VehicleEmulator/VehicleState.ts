@@ -37,7 +37,7 @@ export class VehicleState {
     return new Line3(this.position, this.position.clone().add(this.right));
   }
 
-  printState() {
+  toString(): string {
     // velocity
     const v = this.velocity.length();
     let text = `v ${VehicleState.velocityToKmh(v).toFixed(2)}, `;
@@ -48,8 +48,7 @@ export class VehicleState {
     text += `ax ${VehicleState.accelerationToKmh2(ax).toFixed(
       2
     )}, ac ${VehicleState.accelerationToKmh2(ac).toFixed(2)}`;
-
-    console.log(text);
+    return text;
   }
 
   static velocityToKmh(velocityMs: number) {

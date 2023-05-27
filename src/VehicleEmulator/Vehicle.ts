@@ -4,9 +4,11 @@ import { Manager } from "../Manager";
 import { VehicleState } from "./VehicleState";
 import { Engine } from "./Engine";
 import { GRAVITY, RENDER_SCALE } from "../Const";
-import { DrivingAxle, SteeringAxle } from "./Axle";
 import { DEG2RAD } from "three/src/math/MathUtils";
-import {Input, InputType} from "../Input/IController";
+import { Input, InputType } from "../Input/IController";
+import { DrivingAxle } from "./DrivingAxle";
+import { SteeringAxle } from "./SteeringAxle";
+import { Wheel } from "./Wheel";
 
 // ALL METRIC UNIT
 
@@ -27,6 +29,9 @@ export class Vehicle {
   // rendering
   gameObject: Object3D;
 
+  // debug
+  logMessage: string;
+
   constructor() {
     // physics
     this.centerOfMass = new Vector3(0, 0.5, 0);
@@ -41,6 +46,7 @@ export class Vehicle {
     this.drivingAxle = new DrivingAxle(new Vector3(-1.2, 0, 0), 1.8);
 
     this.drawGameObject();
+    this.logMessage = "";
   }
 
   drawGameObject() {
@@ -80,14 +86,12 @@ export class Vehicle {
 
   tick(dt: number, inputs: Map<InputType, Input>) {
     if (!this.engine) return;
+
+    this.logMessage = "";
     this.previousState.copyState(this.state);
     this.steeringAxle.tick(dt, inputs);
     this.drivingAxle.tick(dt, inputs);
     this.engine.tick(dt, inputs);
-
-    // Keyboard - steering
-    if (inputs.has(InputType.Left)) this.steeringAxle.steer(dt, inputs.get(InputType.Left).value * -1);
-    else if (inputs.has(InputType.Right)) this.steeringAxle.steer(dt, inputs.get(InputType.Right).value * -1);
 
     // Calculate force
     const force = this.calculateForce3();
@@ -107,8 +111,7 @@ export class Vehicle {
     );
 
     // print
-    // this.engine.printState();
-    this.state.printState();
+    console.log(`${this.state.toString()} (${this.logMessage})`);
   }
 
   calculateForce3(): Force {
@@ -184,11 +187,23 @@ export class Vehicle {
       .dot(contactForceFL.clone().add(contactForceFR));
     let fz_front = this.state.right.clone().multiplyScalar(fz_front_pred_abs);
     if (Math.abs(fz_front_pred_abs) > Math.abs(fc_abs)) {
-      console.log("override", fc_abs, this.state.corneringRadius);
       fz_front = this.state.right.clone().multiplyScalar(fc_abs);
+      this.steeringAxle.renderSlipWheel(false, false);
+    } else {
+      this.logMessage += "Front sliping";
+      this.steeringAxle.renderSlipWheel(true, true);
     }
 
     // rear axle - centrifugal
+
+    // braking force
+    const brakeForceF = this.steeringAxle.getBrakingForce();
+    const brakeForceR = this.drivingAxle.getBrakingForce();
+    const brakeForce = brakeForceF.leftWheel
+      .clone()
+      .add(brakeForceF.rightWheel)
+      .add(brakeForceR.leftWheel)
+      .add(brakeForceR.rightWheel);
 
     // render force front
     this.steeringAxle.updateNormalForce(normalForceFL, normalForceFR);
@@ -196,16 +211,25 @@ export class Vehicle {
       contactForceFL.length(),
       contactForceFR.length()
     );
+    this.steeringAxle.updateDrivingForce(
+      -brakeForceF.leftWheel.length(),
+      -brakeForceF.rightWheel.length()
+    );
 
     // render force rear
     this.drivingAxle.updateNormalForce(normalForceRL, normalForceRR);
     this.drivingAxle.updateContactForce(contactForceRL, contactForceRR);
-    this.drivingAxle.updateDrivingForce(drivingForceRL, drivingForceRR);
+    this.drivingAxle.updateDrivingForce(
+      drivingForceRL - brakeForceR.leftWheel.length(),
+      drivingForceRR - brakeForceR.rightWheel.length()
+    );
 
     // friction
-    fx.add(this.state.forward.clone().multiplyScalar(-this.friction));
+    const friction = this.state.forward.clone().multiplyScalar(-this.friction);
 
-    return fx.clone().add(fz_front);
+    // total force
+    const forceTotal = fx.clone().add(fz_front).add(friction).add(brakeForce);
+    return forceTotal;
   }
 
   updateAcceleration(force: Force) {
@@ -233,11 +257,6 @@ export class Vehicle {
       const dv = this.state.acceleration.clone().multiplyScalar(dt);
       v.copy(dv);
     }
-
-    // if (v2.dot(this.state.forward) < 0) {
-    //   this.state.velocity.set(0, 0, 0);
-    //   return;
-    // }
 
     this.state.velocity.copy(v);
   }
