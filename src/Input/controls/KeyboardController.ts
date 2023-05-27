@@ -93,7 +93,7 @@ export class KeyboardController implements IController {
     this.inputs.set(type, { name: type, value: value });
   }
 
-  interpolateInput?(dt: number) {
+  interpolateInput(dt: number) {
     // Accelerate
     if (this.activeInput.has(InputType.Up)) {
       this.accelerationValue += dt * this.accelerationRate;
